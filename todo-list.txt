@@ -1,0 +1,12 @@
+[] Break into its own git project
+[] Add first test
+[] Abstract app logic from main file
+[] Add Navigation
+[] Add AHRS
+[] Add command line interface for setting:
+    * Addresses
+    * Simulator Mode
+[] Integrate logger
+[] Add power status
+[] Add servo
+[] Add file headers and descriptions
