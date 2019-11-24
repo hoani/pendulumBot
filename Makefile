@@ -4,6 +4,6 @@ init:
 	pip3 install pytest
 
 test:
-	pytest
+	python3 -m pytest
 
 .PHONY: init test

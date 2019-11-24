@@ -1,4 +1,3 @@
-[] Break into its own git project
 [] Add first test
 [] Abstract app logic from main file
 [] Add Navigation
