@@ -1,11 +1,13 @@
 from source.comms import btServer, tcpServer
-from source.driver import motors, imu
-import rcpy 
+
 import time
-from source.robot.robotControl import *
+from source.bot.robotControl import *
+from source.bot import motorPair
 from source.comms import commandRegister
 
 if __name__ == "__main__":
+  use_rcpy = True
+  
 
   hostBtMACAddress = '38:D2:69:E1:11:CB' # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
   hostBtPort = 3
@@ -13,10 +15,21 @@ if __name__ == "__main__":
   hostTcpIpAddress = "192.168.6.2"
   hostTcpPort = 11337
   
-  rcpy.set_state(rcpy.RUNNING)
+  def check_exit_conditions_rcpy():
+    return rcpy.get_state() != rcpy.EXITING
+    
+  def check_exit_conditions_simulated():
+    return True
   
-  left = 3;
-  right = 2;
+  if (use_rcpy):
+    import rcpy 
+    from source.driver.rcpy import motors, imu
+    rcpy.set_state(rcpy.RUNNING)
+    check_exit_conditions = check_exit_conditions_rcpy
+  else:
+    from source.driver.simulated import motors, imu
+    check_exit_conditions = check_exit_conditions_simulated
+  
   
   def callback_auto(payload):
     global robo
@@ -57,7 +70,11 @@ if __name__ == "__main__":
   
   
   try:
-    pair = motors.dcMotorPair(left, right)
+    
+    left = motors.dcMotor(3);
+    right = motors.dcMotor(2);
+    
+    pair = motorPair.MotorPair(left, right)
     bt_socket = btServer.btServer(hostBtMACAddress, hostBtPort)
     tcp_socket = tcpServer.TcpServer(hostTcpIpAddress, hostTcpPort)
     robo = RobotControl(pair)
@@ -69,7 +86,7 @@ if __name__ == "__main__":
     commands.add("disable", callback_disable)
     commands.add("manual", callback_manual)
     
-    while rcpy.get_state() != rcpy.EXITING:
+    while check_exit_conditions():
       
       
       

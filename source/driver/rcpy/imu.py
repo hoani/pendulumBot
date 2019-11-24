@@ -1,17 +1,6 @@
 
 import rcpy.mpu9250 as mpu9250
-
-class Vect:
-  def __init__(self, x = 0.0, y = 0.0, z = 0.0):
-    self.x = x
-    self.y = y
-    self.z = z
-    
-class ImuData:
-  def __init__(self, accelerometer, gyroscope, magnetometer):
-    self.accelerometer = accelerometer
-    self.gyroscope = gyroscope
-    self.magnetometer = magnetometer
+from source.utilities import vect, imuData
 
 class Imu:
   def __init__(self):
@@ -19,22 +8,22 @@ class Imu:
     
   def sample(self):
     data = mpu9250.read()
-    accelerometer = Vect( 
+    accelerometer = vect.Vec3( 
       data['accel'][0],
       data['accel'][1],
       data['accel'][2]
       )
-    gyroscope = Vect( 
+    gyroscope = vect.Vec3( 
       data['gyro'][0],
       data['gyro'][1],
       data['gyro'][2]
       )
-    magnetometer = Vect( 
+    magnetometer = vect.Vec3( 
       data['mag'][0],
       data['mag'][1],
       data['mag'][2]
       )
-    return ImuData(accelerometer, gyroscope, magnetometer)
+    return imuData.ImuData(accelerometer, gyroscope, magnetometer)
     
 if __name__ == "__main__":
   import rcpy 
