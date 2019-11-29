@@ -1,7 +1,7 @@
-from source import codec, packet
-import json
+from RoBus import codec, packet
+import json, os
 
-CONFIG_PATH = "test/fake/protocol.json"
+CONFIG_PATH = os.path.dirname(__file__) + "/fake/protocol.json"
 
 class TestGetStruct():
   def setup_method(self):
