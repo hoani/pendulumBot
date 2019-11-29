@@ -1,5 +1,7 @@
-from source.utilities import commsCodec
+from source import commsCodec
 import json
+
+CONFIG_PATH = "test/fake/protocol.json"
 
 class TestGetStruct():
   def setup_method(self):
@@ -42,7 +44,7 @@ class TestGetStruct():
 
 class TestExtractTypes():
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     codec = commsCodec.Codec(protocol_file_path)
     self.data = codec.protocol["data"]
 
@@ -163,7 +165,7 @@ class TestPathFromCount():
 class TestAckPacketEncode():
 
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     self.codec = commsCodec.Codec(protocol_file_path)
 
   def test_ack_encoding(self):
@@ -181,7 +183,7 @@ class TestAckPacketEncode():
 
 class TestFromAddress():
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     self.codec = commsCodec.Codec(protocol_file_path)
 
   def test_address_map(self):
@@ -231,7 +233,7 @@ class TestFromAddress():
 
 class TestGetSettableFromPath():
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     self.codec = commsCodec.Codec(protocol_file_path)
 
   def test_is_settable(self):

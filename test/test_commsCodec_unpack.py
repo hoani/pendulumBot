@@ -1,9 +1,11 @@
-from source.utilities import commsCodec
+from source import commsCodec
 import json
+
+CONFIG_PATH = "test/fake/protocol.json"
 
 class TestPacketPayloadUnpack():
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     self.codec = commsCodec.Codec(protocol_file_path)
 
   def test_unpack_simple(self):

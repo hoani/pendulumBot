@@ -1,9 +1,11 @@
-from source.utilities import commsCodec
+from source import commsCodec
 import json
+
+CONFIG_PATH = "test/fake/protocol.json"
 
 class TestGetPacketDecode():
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     self.codec = commsCodec.Codec(protocol_file_path)
 
   def test_simple_decoding(self):
@@ -50,7 +52,7 @@ class TestGetPacketDecode():
 
 class TestSetPacketDecodeMultiple():
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     self.codec = commsCodec.Codec(protocol_file_path)
 
   def test_sequential(self):
@@ -84,7 +86,7 @@ class TestSetPacketDecodeMultiple():
 
 class TestSetPacketDecodeSingle():
   def setup_method(self):
-    protocol_file_path = "test/fakes/protocol.json"
+    protocol_file_path = CONFIG_PATH
     self.codec = commsCodec.Codec(protocol_file_path)
 
   def test_simple_string(self):

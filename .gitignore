@@ -3,3 +3,4 @@
 *.csv
 env*
 *.vscode*
+*.DS_Store*
