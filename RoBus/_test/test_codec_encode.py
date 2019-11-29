@@ -33,10 +33,43 @@ class TestGetPacketEncode():
     result = self.codec.encode(_packet)
     assert(result == expected)
 
+  def test_invalid_address(self):
+    expected = ("").encode('utf-8')
+    _packet = packet.Packet("get", "protocol/invalid")
+    result = self.codec.encode(_packet)
+    assert(result == expected)
+
   def test_nested_encoding(self):
     expected = ("G0004\n").encode('utf-8')
     _packet = packet.Packet("get", "protocol/version/patch")
     result = self.codec.encode(_packet)
+    assert(result == expected)
+
+  def test_can_pass_array(self):
+    expected = ("G0004\n").encode('utf-8')
+    _packet = packet.Packet("get", "protocol/version/patch")
+    result = self.codec.encode([_packet])
+    assert(result == expected)
+
+  def test_compound_packets(self):
+    expected = ("G0003\nG0004\n").encode('utf-8')
+    packets = [
+      packet.Packet("get", "protocol/version/minor"),
+      packet.Packet("get", "protocol/version/patch")
+    ]
+    result = self.codec.encode(packets)
+    assert(result == expected)
+  
+  def test_compound_mixed_packets(self):
+    expected = ("G1201\nB0005\nS2002:0\nG0003\nP0004:1234\n").encode('utf-8')
+    packets = [
+      packet.Packet("get", "imu/accel"),
+      packet.Packet("sub", "protocol/name"),
+      packet.Packet("set", "typecheck/boolean", False),
+      packet.Packet("get", "protocol/version/minor"),
+      packet.Packet("pub", "protocol/version/patch", 0x1234)
+    ]
+    result = self.codec.encode(packets)
     assert(result == expected)
 
 

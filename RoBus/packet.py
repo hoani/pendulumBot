@@ -10,3 +10,4 @@ class Packet():
       self.payload = tuple([payload])
     else:
       self.payload = payload
+

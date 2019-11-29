@@ -13,6 +13,7 @@
     "pub": "P"
   },
   "separator": ":",
+  "compound": "|",
   "end": "\n",
   "data": {
     "protocol": { "_addr": "0000", 
