@@ -1,4 +1,4 @@
-from source import commsCodec
+from source import codec
 import json
 
 CONFIG_PATH = "test/fake/protocol.json"
@@ -19,53 +19,53 @@ class TestGetStruct():
 
   def test_get_none(self):
     expected = None
-    result = commsCodec.get_struct(self.root, ["Florida"])
+    result = codec.get_struct(self.root, ["Florida"])
     assert(result == expected)
   
   def test_get_basic(self):
     expected = self.root["NZ"]
-    result = commsCodec.get_struct(self.root, ["NZ"])
+    result = codec.get_struct(self.root, ["NZ"])
     assert(result == expected)
 
   def test_get_deep(self):
     expected = self.root["NZ"]["Auckland"]["Avondale"]
-    result = commsCodec.get_struct(self.root, ["NZ", "Auckland", "Avondale"])
+    result = codec.get_struct(self.root, ["NZ", "Auckland", "Avondale"])
     assert(result == expected)
 
   def test_get_another(self):
     expected = self.root["NZ"]["Napier"]
-    result = commsCodec.get_struct(self.root, ["NZ", "Napier"])
+    result = codec.get_struct(self.root, ["NZ", "Napier"])
     assert(result == expected)
 
   def test_no_path(self):
     expected = self.root
-    result = commsCodec.get_struct(self.root, [])
+    result = codec.get_struct(self.root, [])
     assert(result == expected)
 
 class TestExtractTypes():
   def setup_method(self):
     protocol_file_path = CONFIG_PATH
-    codec = commsCodec.Codec(protocol_file_path)
-    self.data = codec.protocol["data"]
+    _codec = codec.Codec(protocol_file_path)
+    self.data = _codec.protocol["data"]
 
   def test_simple_type(self):
     expected = ["bool"]
-    result = commsCodec.extract_types(self.data, ["ping"])
+    result = codec.extract_types(self.data, ["ping"])
     assert(result == expected)
 
   def test_nested_type(self):
     expected = ["u16"]
-    result = commsCodec.extract_types(self.data, ["protocol", "version", "patch"])
+    result = codec.extract_types(self.data, ["protocol", "version", "patch"])
     assert(result == expected)
 
   def test_multiple_types(self):
     expected = ["u8", "u8", "u16"]
-    result = commsCodec.extract_types(self.data, ["protocol", "version"])
+    result = codec.extract_types(self.data, ["protocol", "version"])
     assert(result == expected)
 
   def test_multiple_types_nesting(self):
     expected = ["u8", "u8", "u16", "string"]
-    result = commsCodec.extract_types(self.data, ["protocol"])
+    result = codec.extract_types(self.data, ["protocol"])
     assert(result == expected)
 
 
@@ -86,37 +86,37 @@ class TestCountToPath():
 
   def test_none_counts_depth(self):
     expected = 7
-    result = commsCodec.count_to_path(self.root, None)
+    result = codec.count_to_path(self.root, None)
     assert(result == expected)
 
   def test_basic_one_deep(self):
     expected = 1
-    result = commsCodec.count_to_path(self.root, ["NZ"])
+    result = codec.count_to_path(self.root, ["NZ"])
     assert(result == expected)
 
   def test_basic_two_deep(self):
     expected = 2
-    result = commsCodec.count_to_path(self.root, ["NZ", "Auckland"])
+    result = codec.count_to_path(self.root, ["NZ", "Auckland"])
     assert(result == expected)
 
   def test_basic_three_deep(self):
     expected = 3
-    result = commsCodec.count_to_path(self.root, ["NZ", "Auckland", "GlenInnes"])
+    result = codec.count_to_path(self.root, ["NZ", "Auckland", "GlenInnes"])
     assert(result == expected)
 
   def test_three_deep(self):
     expected = 4
-    result = commsCodec.count_to_path(self.root, ["NZ", "Auckland", "Avondale"])
+    result = codec.count_to_path(self.root, ["NZ", "Auckland", "Avondale"])
     assert(result == expected)
 
   def test_two_deep(self):
     expected = 6
-    result = commsCodec.count_to_path(self.root, ["NZ", "Napier"])
+    result = codec.count_to_path(self.root, ["NZ", "Napier"])
     assert(result == expected)
 
   def test_incorrect_path(self):
     expected = None
-    result = commsCodec.count_to_path(self.root, ["NZ", "Christchurch"])
+    result = codec.count_to_path(self.root, ["NZ", "Christchurch"])
     assert(result == expected)
 
 class TestPathFromCount():
@@ -136,28 +136,28 @@ class TestPathFromCount():
   def test_zero_counts(self):
     expected = []
     expected_count = 0
-    (result, result_count) = commsCodec.path_from_count(self.root, 0)
+    (result, result_count) = codec.path_from_count(self.root, 0)
     assert(result == expected)
     assert(result_count == expected_count)
 
   def test_simple_counts(self):
     expected = ["NZ", "Auckland", "Avondale"]
     expected_count = 0
-    (result, result_count) = commsCodec.path_from_count(self.root, 4)
+    (result, result_count) = codec.path_from_count(self.root, 4)
     assert(result == expected)
     assert(result_count == expected_count)
 
   def test_complex_counts(self):
     expected = ["NZ", "Napier"]
     expected_count = 0
-    (result, result_count) = commsCodec.path_from_count(self.root, 6)
+    (result, result_count) = codec.path_from_count(self.root, 6)
     assert(result == expected)
     assert(result_count == expected_count)
 
   def test_no_result(self):
     expected = []
     expected_count = 3
-    (result, result_count) = commsCodec.path_from_count(self.root, 10)
+    (result, result_count) = codec.path_from_count(self.root, 10)
     assert(result == expected)
     assert(result_count == expected_count)
 
@@ -166,17 +166,17 @@ class TestAckPacketEncode():
 
   def setup_method(self):
     protocol_file_path = CONFIG_PATH
-    self.codec = commsCodec.Codec(protocol_file_path)
+    self.codec = codec.Codec(protocol_file_path)
 
   def test_ack_encoding(self):
     expected = ("A\n").encode('utf-8')
-    packet = commsCodec.Packet("ack")
+    packet = codec.Packet("ack")
     result = self.codec.encode(packet)
     assert(result == expected)
 
   def test_nack_encoding(self):
     expected = ("N\n").encode('utf-8')
-    packet = commsCodec.Packet("nak")
+    packet = codec.Packet("nak")
     result = self.codec.encode(packet)
     assert(result == expected)
 
@@ -184,7 +184,7 @@ class TestAckPacketEncode():
 class TestFromAddress():
   def setup_method(self):
     protocol_file_path = CONFIG_PATH
-    self.codec = commsCodec.Codec(protocol_file_path)
+    self.codec = codec.Codec(protocol_file_path)
 
   def test_address_map(self):
     assert("0000" in self.codec.address_map.keys())
@@ -234,7 +234,7 @@ class TestFromAddress():
 class TestGetSettableFromPath():
   def setup_method(self):
     protocol_file_path = CONFIG_PATH
-    self.codec = commsCodec.Codec(protocol_file_path)
+    self.codec = codec.Codec(protocol_file_path)
 
   def test_is_settable(self):
     expected = True

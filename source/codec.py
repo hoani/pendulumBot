@@ -1,3 +1,5 @@
+# RoBus Codec
+# 2019 (C) Hoani Bryson
 
 import json, struct
 
