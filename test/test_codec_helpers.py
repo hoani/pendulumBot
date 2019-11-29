@@ -1,4 +1,4 @@
-from source import codec
+from source import codec, packet
 import json
 
 CONFIG_PATH = "test/fake/protocol.json"
@@ -170,14 +170,14 @@ class TestAckPacketEncode():
 
   def test_ack_encoding(self):
     expected = ("A\n").encode('utf-8')
-    packet = codec.Packet("ack")
-    result = self.codec.encode(packet)
+    _packet = packet.Packet("ack")
+    result = self.codec.encode(_packet)
     assert(result == expected)
 
   def test_nack_encoding(self):
     expected = ("N\n").encode('utf-8')
-    packet = codec.Packet("nak")
-    result = self.codec.encode(packet)
+    _packet = packet.Packet("nak")
+    result = self.codec.encode(_packet)
     assert(result == expected)
 
 

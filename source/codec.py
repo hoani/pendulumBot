@@ -1,6 +1,8 @@
 # RoBus Codec
 # 2019 (C) Hoani Bryson
 
+from source import packet
+
 import json, struct
 
 def count_depth(root):
@@ -197,15 +199,6 @@ def decode_types(item, typeof):
   else:
     return ""
 
-class Packet():
-  def __init__(self, category, path=None, payload=None):
-    self.category = category
-    self.path = path
-    if isinstance(payload, tuple) == False and payload != None:
-      self.payload = tuple([payload])
-    else:
-      self.payload = payload
-
 class Codec():
   def __init__(self, protocol_file_path):
     with open(protocol_file_path, "r") as protocol_file:
@@ -253,7 +246,7 @@ class Codec():
     else:
       payload = None
     
-    return Packet(category, path, payload)
+    return packet.Packet(category, path, payload)
 
   def unpack(self, packet):
     result = {}
