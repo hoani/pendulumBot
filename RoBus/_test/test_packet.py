@@ -1,4 +1,5 @@
 from RoBus import packet
+from RoBus._test.fake import fakeCodec
 
 
 class TestPacketInstantiation():
@@ -18,6 +19,19 @@ class TestPacketInstantiation():
     assert(p.payload[1] == 2)
     assert(p.payload[2] == 3)
     assert(len(p.payload) == 3)
+
+
+class TestPacketUnpack():
+  def setup_method(self):
+    self.codec = fakeCodec.Codec("")
+
+  def test_unpack(self):
+    expected = {"protocol/version/major": {"value": 5, "set": False}}
+    self.codec.unpack_return = expected
+    _packet = packet.Packet("pub")
+    result = _packet.unpack(self.codec)
+    assert(self.codec.unpack_called == True)
+    assert(result == expected)
 
   
 
