@@ -73,6 +73,30 @@ class TestGetPacketEncode():
     assert(result == expected)
 
 
+class TestPacketCompoundEncode():
+
+  def setup_method(self):
+    protocol_file_path = CONFIG_PATH
+    self.codec = codec.Codec(protocol_file_path)
+
+  def test_compound_encoding(self):
+    expected = ("G0000|8000\n").encode('utf-8')
+    _packet = packet.Packet("get", "protocol")
+    _packet.add("control")
+    result = self.codec.encode(_packet)
+    assert(result == expected)
+
+  def test_compound_multipacket_encoding(self):
+    expected = ("G0000|8000\nS8000|0000\n").encode('utf-8')
+    packets = [
+      packet.Packet("get", "protocol"),
+      packet.Packet("set", "control")
+    ]
+    packets[0].add("control")
+    packets[1].add("protocol")
+    result = self.codec.encode(packets)
+    assert(result == expected)
+
 
 class TestSetPacketEncodeMultiple():
   def setup_method(self):

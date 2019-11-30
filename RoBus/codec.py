@@ -219,8 +219,13 @@ class Codec():
 
       encoded += self.protocol["category"][_packet.category]
 
+      internal = ""
+
       for (ppath, ppayload) in tuple(zip(_packet.paths, _packet.payloads)):
         if ppath != None:
+          if internal != "":
+            internal += self.protocol["compound"] 
+
           path = ppath.split("/")
           root = self.protocol["data"][path[0]]
           address = int(root["_addr"], 16)
@@ -231,13 +236,15 @@ class Codec():
             else:
               print("invalid address: {}".format(ppath))
               return "".encode("utf-8")
-          encoded += "{:04x}".format(address)
+          internal += "{:04x}".format(address)
         if ppayload != None:
           types = extract_types(root, path[1:])
           count = min(len(types), len(ppayload))
           for i in range(count):
-            encoded += self.protocol["separator"]
-            encoded += encode_types(ppayload[i], types[i])
+            internal += self.protocol["separator"]
+            internal += encode_types(ppayload[i], types[i])
+        
+      encoded += internal
 
     encoded += self.protocol["end"]
     return encoded.encode('utf-8')
