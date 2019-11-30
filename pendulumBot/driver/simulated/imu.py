@@ -1,4 +1,4 @@
-from source.utilities import vect, imuData
+from pendulumBot.utilities import vect, imuData
 import random
 
 def noise(size):

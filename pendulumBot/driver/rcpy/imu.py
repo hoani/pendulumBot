@@ -1,6 +1,6 @@
 
 import rcpy.mpu9250 as mpu9250
-from source.utilities import vect, imuData
+from pendulumBot.utilities import vect, imuData
 
 class Imu:
   def __init__(self):

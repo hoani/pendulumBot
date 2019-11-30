@@ -1,5 +1,5 @@
-from source.bot import robotControl
-from test.fake.bot import motorPairFake
+from pendulumBot.bot import robotControl
+from pendulumBot._test.fake.bot import motorPairFake
 
 class TestControlBasic:
 

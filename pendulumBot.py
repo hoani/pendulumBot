@@ -1,18 +1,19 @@
-from source.comms import btServer, tcpServer
+from pendulumBot.comms import btServer, tcpServer
 
 import time
-from source.bot.robotControl import *
-from source.bot import motorPair
-from source.comms import commandRegister
+from pendulumBot.bot.robotControl import *
+from pendulumBot.bot import motorPair
+from pendulumBot.comms import commandRegister
 
 if __name__ == "__main__":
-  use_rcpy = True
+  use_rcpy = False
+  use_bluetooth = False
   
 
   hostBtMACAddress = '38:D2:69:E1:11:CB' # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
   hostBtPort = 3
   
-  hostTcpIpAddress = "192.168.6.2"
+  hostTcpIpAddress = "192.168.1.9"
   hostTcpPort = 11337
   
   def check_exit_conditions_rcpy():
@@ -23,11 +24,11 @@ if __name__ == "__main__":
   
   if (use_rcpy):
     import rcpy 
-    from source.driver.rcpy import motors, imu
+    from pendulumBot.driver.rcpy import motors, imu
     rcpy.set_state(rcpy.RUNNING)
     check_exit_conditions = check_exit_conditions_rcpy
   else:
-    from source.driver.simulated import motors, imu
+    from pendulumBot.driver.simulated import motors, imu
     check_exit_conditions = check_exit_conditions_simulated
   
   
@@ -71,11 +72,12 @@ if __name__ == "__main__":
   
   try:
     
-    left = motors.dcMotor(3);
-    right = motors.dcMotor(2);
+    left = motors.dcMotor(3)
+    right = motors.dcMotor(2)
     
     pair = motorPair.MotorPair(left, right)
-    bt_socket = btServer.btServer(hostBtMACAddress, hostBtPort)
+    if (use_bluetooth):
+      bt_socket = btServer.btServer(hostBtMACAddress, hostBtPort)
     tcp_socket = tcpServer.TcpServer(hostTcpIpAddress, hostTcpPort)
     robo = RobotControl(pair)
     imu = imu.Imu()
@@ -89,12 +91,17 @@ if __name__ == "__main__":
     while check_exit_conditions():
       
       
-      
-      bt_socket.accept_connections();
-      tcp_socket.accept_connections();
-      rx = bt_socket.recv()
-      if rx != None:
-        srx = bt_socket
+      if use_bluetooth:
+        bt_socket.accept_connections()
+      tcp_socket.accept_connections()
+      if use_bluetooth:
+        rx = bt_socket.recv()
+        if rx != None:
+          srx = bt_socket
+        else:
+          rx = tcp_socket.recv()
+          if rx != None:
+            srx = tcp_socket
       else:
         rx = tcp_socket.recv()
         if rx != None:
@@ -142,8 +149,9 @@ if __name__ == "__main__":
             )
           ).encode('utf-8')
       
-      for addr in bt_socket.get_clients():
-        bt_socket.send(addr, imu_packet)
+      if use_bluetooth:
+        for addr in bt_socket.get_clients():
+          bt_socket.send(addr, imu_packet)
         
       for addr in tcp_socket.get_clients():
         tcp_socket.send(addr, imu_packet)
@@ -156,7 +164,8 @@ if __name__ == "__main__":
   except Exception as e:
     print(e)
     print("Closing socket")
-    bt_socket.close()
+    if use_bluetooth:
+      bt_socket.close()
     tcp_socket.close()
     
   finally:
