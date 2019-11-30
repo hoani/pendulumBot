@@ -5,10 +5,13 @@ from pendulumBot.bot.robotControl import *
 from pendulumBot.bot import motorPair
 from pendulumBot.comms import commandRegister
 
+from external.RoBus.RoBus import codec, packet
+
 if __name__ == "__main__":
   use_rcpy = False
   use_bluetooth = False
   
+  my_codec = codec.Codec('json/protocol.json')
 
   hostBtMACAddress = '38:D2:69:E1:11:CB' # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
   hostBtPort = 3
@@ -34,16 +37,18 @@ if __name__ == "__main__":
   
   def callback_auto(payload):
     global robo
-    robo.set_state(RobotControl.STATE_AUTO, None)
+    robo.set_state(RobotControl.STATE_AUTO, payload)
+    return True
     
   def callback_disable(payload):
     global robo
     robo.set_state(RobotControl.STATE_DISABLED, None)
+    return True
     
   def callback_manual(payload):
     global robo
-    if len(payload) < 2:
-      return
+    if len(payload) < 1:
+      return False
     if payload[0] == "FW":
       direction = RobotControl.MANUAL_DIRECTION_FW
     elif payload[0] == "BW":
@@ -54,6 +59,7 @@ if __name__ == "__main__":
       direction = RobotControl.MANUAL_DIRECTION_RT
     else:
       direction = RobotControl.MANUAL_DIRECTION_FW
+    return True
     
     try:
       speed = float(payload[1])
@@ -84,9 +90,11 @@ if __name__ == "__main__":
     delta_ms = 100
     
     commands = commandRegister.CommandRegister()
-    commands.add("auto", callback_auto)
-    commands.add("disable", callback_disable)
-    commands.add("manual", callback_manual)
+    commands.add("control/automatic", callback_auto)
+    commands.add("control/disable", callback_disable)
+    commands.add("control/manual", callback_manual)
+
+    last_data = "".encode("utf-8")
     
     while check_exit_conditions():
       
@@ -113,48 +121,80 @@ if __name__ == "__main__":
       if rx != None:
         (addr, data) = rx
         print("Received: {}".format(data))
-        
-        lines = data.decode('utf-8').split('\n');
-        for line in lines:
-          if line == "":
-            break
-          args = line.split(" ");
-          cmd = args[0];
-          if (len(args) > 1):
-            payload = args[1:]
-          else:
-            payload = []
+
+        (last_data, packets) = my_codec.decode(last_data + data)
+
+        # To do - respond NAK to a group with an unknown command
+
+        for p in packets:
+          if p.category == "set":
+            response = packet.Packet("ack")
+            for (cmd, payload) in tuple(zip(p.paths, p.payloads)):
+              response.add(cmd)
+              if commands.execute(cmd, payload) == False:
+                print("Command {} Failed", cmd)
+                p.category = "nak"
+
+            srx.send(addr, my_codec.encode(p))
+            
+        # lines = data.decode('utf-8').split('\n');
+        # for line in lines:
+        #   if line == "":
+        #     break
+        #   args = line.split(" ");
+        #   cmd = args[0];
+        #   if (len(args) > 1):
+        #     payload = args[1:]
+        #   else:
+        #     payload = []
           
-          if commands.execute(cmd, payload):
-            srx.send(addr, "{} ack".format(cmd))
-          else:
-            print("Command not recognized")
-            srx.send(addr, "{} not recognized".format(data.decode('utf-8')))
+        #   if commands.execute(cmd, payload):
+        #     srx.send(addr, "{} ack".format(cmd))
+        #   else:
+        #     print("Command not recognized")
+        #     srx.send(addr, "{} not recognized".format(data.decode('utf-8')))
           
       
       imu_data = imu.sample()
-      imu_packet = (
-        "accel {:.2f} {:.2f} {:.2f}\n"
-        "gyros {:.2f} {:.2f} {:.2f}\n"
-        "magne {:.2f} {:.2f} {:.2f}\n".format(
-            imu_data.accelerometer.x,
-            imu_data.accelerometer.y,
-            imu_data.accelerometer.z,
-            imu_data.gyroscope.x,
-            imu_data.gyroscope.y,
-            imu_data.gyroscope.z,
-            imu_data.magnetometer.x,
-            imu_data.magnetometer.y,
-            imu_data.magnetometer.z,
-            )
-          ).encode('utf-8')
+      # imu_packet = (
+      #   "accel {:.2f} {:.2f} {:.2f}\n"
+      #   "gyros {:.2f} {:.2f} {:.2f}\n"
+      #   "magne {:.2f} {:.2f} {:.2f}\n".format(
+      #       imu_data.accelerometer.x,
+      #       imu_data.accelerometer.y,
+      #       imu_data.accelerometer.z,
+      #       imu_data.gyroscope.x,
+      #       imu_data.gyroscope.y,
+      #       imu_data.gyroscope.z,
+      #       imu_data.magnetometer.x,
+      #       imu_data.magnetometer.y,
+      #       imu_data.magnetometer.z,
+      #       )
+      #     ).encode('utf-8')
+
+      imu_packet = packet.Packet('pub', 'imu', 
+        (
+          imu_data.accelerometer.x,
+          imu_data.accelerometer.y,
+          imu_data.accelerometer.z,
+          imu_data.gyroscope.x,
+          imu_data.gyroscope.y,
+          imu_data.gyroscope.z,
+          imu_data.magnetometer.x,
+          imu_data.magnetometer.y,
+          imu_data.magnetometer.z
+        )
+      )
+
+      imu_bytes = my_codec.encode(imu_packet)
+      
       
       if use_bluetooth:
         for addr in bt_socket.get_clients():
-          bt_socket.send(addr, imu_packet)
+          bt_socket.send(addr, imu_bytes)
         
       for addr in tcp_socket.get_clients():
-        tcp_socket.send(addr, imu_packet)
+        tcp_socket.send(addr, imu_bytes)
           
         
               
@@ -162,6 +202,9 @@ if __name__ == "__main__":
       
           
   except Exception as e:
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    print(exc_type,',', fname,', ln', exc_tb.tb_lineno)
     print(e)
     print("Closing socket")
     if use_bluetooth:

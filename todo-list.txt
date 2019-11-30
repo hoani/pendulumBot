@@ -1,3 +1,5 @@
+[] Better handling of remote closing
+[] Modularize the pendulumBot.py properly
 [] Add Navigation
 [] Add AHRS
 [] Add command line interface for setting:

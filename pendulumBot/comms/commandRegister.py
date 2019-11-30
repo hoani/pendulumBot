@@ -6,9 +6,8 @@ class CommandRegister:
     self.registry[command] = callback
     
   def execute(self, command, payload):
-    print("have command ", command)
+    print("have command", command, payload)
     if command in self.registry.keys():
-      self.registry[command](payload)
-      return True
+      return self.registry[command](payload)
     else:
       return False
