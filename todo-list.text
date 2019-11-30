@@ -3,7 +3,7 @@
     p = Packet(category, address, payload)
   - want to allow the user to add info to a packet:
     p.Add(address, payload)
-[] Allow multi packets in a single packet string (eg. "P0800:44:33|P9000:12:6543\n")
+[] Allow compound packets in a single packet string (eg. "P0800:44:33|P9000:12:6543\n")
 [] Do acks/nacks properly - should be: "A8000\n" or "N8000\n"
   Note: Acks and Naks only apply as a response to set commands
 [] Set up documentation for general behaviour

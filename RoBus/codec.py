@@ -260,24 +260,29 @@ class Codec():
       string = string.decode('utf-8')
       category = None
       path = None
-      payload = []
       start = string[0]
-      parts = string[1:].split(self.protocol["separator"])
       category = self.category_from_start(start)
-      if parts != ['']:
-        addr = parts[0]
-        path = self.path_from_address(addr)
-        path_array = path.split("/")
-        root = self.protocol["data"][path_array[0]]
-        types = extract_types(root, path_array[1:])
-        for (item, typeof) in tuple(zip(parts[1:], types)):
-          payload.append(decode_types(item, typeof))
+      _packet = packet.Packet(category)
+      subpackets = string[1:].split(self.protocol["compound"])
+      print(subpackets)
+      for subpacket in subpackets:
+        parts = subpacket.split(self.protocol["separator"])
+        if parts != ['']:
+          payload = []
+          addr = parts[0]
+          path = self.path_from_address(addr)
+          path_array = path.split("/")
+          print(path)
+          root = self.protocol["data"][path_array[0]]
+          types = extract_types(root, path_array[1:])
+          for (item, typeof) in tuple(zip(parts[1:], types)):
+            payload.append(decode_types(item, typeof))
 
-        payload = tuple(payload)
-      else:
-        payload = None
+          payload = tuple(payload)
 
-      packets.append(packet.Packet(category, path, payload))
+          _packet.add(path, payload)
+
+      packets.append(_packet)
     
     return (remainder, packets)
 
@@ -305,6 +310,7 @@ class Codec():
     except:
       return ""
 
+
     keys = self.address_map.keys()
     for i, key in enumerate(keys):
       if i + 1 == len(keys):
@@ -312,7 +318,7 @@ class Codec():
       else:
         next_key = list(keys)[i + 1]
 
-      if clamp(int(address, 16), int(key, 16), int(next_key, 16)) == int(address, 16):
+      if clamp(int(address, 16), int(key, 16), int(next_key, 16)-1) == int(address, 16):
         diff = int(address, 16) - int(key, 16)
         (path, count) = path_from_count(
           self.protocol["data"][self.address_map[key]], 

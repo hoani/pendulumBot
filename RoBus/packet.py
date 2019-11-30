@@ -6,9 +6,10 @@ class Packet():
     self.category = category
     self.paths = []
     self.payloads = []
-    self.add(path, payload)
+    if path != None:
+      self.add(path, payload)
 
-  def add(self, path, payload):
+  def add(self, path, payload=None):
     self.paths.append(path)
     if isinstance(payload, tuple) == False and payload != None:
       self.payloads.append(tuple([payload]))

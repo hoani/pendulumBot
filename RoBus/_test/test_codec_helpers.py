@@ -22,9 +22,14 @@ class TestGetStruct():
     result = codec.get_struct(self.root, ["Florida"])
     assert(result == expected)
   
-  def test_get_basic(self):
-    expected = self.root["NZ"]
-    result = codec.get_struct(self.root, ["NZ"])
+  def test_get_last(self):
+    expected = self.root["Rarotonga"]
+    result = codec.get_struct(self.root, ["Rarotonga"])
+    assert(result == expected)
+
+  def test_get_none(self):
+    expected = None
+    result = codec.get_struct(self.root, ["Florida"])
     assert(result == expected)
 
   def test_get_deep(self):
@@ -218,6 +223,11 @@ class TestFromAddress():
   def test_mapped_complex_path_from_address(self):
     expected = "control/manual/speed"
     result = self.codec.path_from_address("8004")
+    assert(expected == result)
+
+  def test_mapped_control(self):
+    expected = "control"
+    result = self.codec.path_from_address("8000")
     assert(expected == result)
 
   def test_no_path(self):

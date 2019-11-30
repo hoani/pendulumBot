@@ -68,13 +68,35 @@ class TestDecodeCompoundPackets():
     self.codec = codec.Codec(protocol_file_path)
 
   def test_compound_decoding(self):
-    expected = [packet.Packet("get", "protocol"), packet.Packet("sub", "protocol/version")]
-    (_, result) = self.codec.decode("G0000\nB0001\n".encode('utf-8'))
+    expected = packet.Packet("get", "protocol")
+    expected.add("protocol/version")
+    (_, result) = self.codec.decode("G0000|0001\n".encode('utf-8'))
+    assert(len(result) == 1)
+    assert(result[0].category == expected.category)
+    assert(result[0].paths == expected.paths)
+
+  def test_compound_with_payloads_decoding(self):
+    expected = packet.Packet("set", "protocol", (0x11, 0x22, 0x33))
+    expected.add("protocol/version", 0x44)
+    (_, result) = self.codec.decode("S0000:11:22:33|0001:44\n".encode('utf-8'))
+    assert(len(result) == 1)
+    assert(result[0].category == expected.category)
+    assert(result[0].paths == expected.paths)
+    assert(result[0].payloads == expected.payloads)
+
+  def test_multipacket_compound_decoding(self):
+    expected = [
+      packet.Packet("get", "protocol"),
+      packet.Packet("sub", "control")
+    ]
+    expected[0].add("protocol/version")
+    expected[1].add("imu/accel")
+    (_, result) = self.codec.decode("G0000|0001\nB8000|1201\n".encode('utf-8'))
     assert(len(result) == 2)
     assert(result[0].category == expected[0].category)
-    assert(result[0].paths     == expected[0].paths)
+    assert(result[0].paths    == expected[0].paths)
     assert(result[1].category == expected[1].category)
-    assert(result[1].paths     == expected[1].paths)
+    assert(result[1].paths    == expected[1].paths)
 
 class TestSetPayloadDecodeMultiple():
   def setup_method(self):
