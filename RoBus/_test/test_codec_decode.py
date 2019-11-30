@@ -39,13 +39,13 @@ class TestGetPacketDecode():
     assert(result.paths == expected.paths)
 
   def test_ack_category(self):
-    expected = packet.Packet("ack")
-    (_, [result]) = self.codec.decode("A\n".encode('utf-8'))
+    expected = packet.Packet("ack", "control")
+    (_, [result]) = self.codec.decode("A8000\n".encode('utf-8'))
     assert(result.category == expected.category)
   
   def test_nack_category(self):
-    expected = packet.Packet("nak")
-    (_, [result]) = self.codec.decode("N\n".encode('utf-8'))
+    expected = packet.Packet("nak", "control")
+    (_, [result]) = self.codec.decode("N8000\n".encode('utf-8'))
     assert(result.category == expected.category)
 
   def test_simple_payload_decoding(self):

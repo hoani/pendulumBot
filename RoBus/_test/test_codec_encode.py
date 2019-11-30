@@ -9,14 +9,21 @@ class TestAckPacketEncode():
     self.codec = codec.Codec(protocol_file_path)
 
   def test_ack_encoding(self):
-    expected = ("A\n").encode('utf-8')
-    _packet = packet.Packet("ack")
+    expected = ("A8000\n").encode('utf-8')
+    _packet = packet.Packet("ack", "control")
     result = self.codec.encode(_packet)
     assert(result == expected)
 
   def test_nack_encoding(self):
-    expected = ("N\n").encode('utf-8')
-    _packet = packet.Packet("nak")
+    expected = ("N8000\n").encode('utf-8')
+    _packet = packet.Packet("nak", "control")
+    result = self.codec.encode(_packet)
+    assert(result == expected)
+
+  def test_nack_compound(self):
+    expected = ("N8000|1200\n").encode('utf-8')
+    _packet = packet.Packet("nak", "control")
+    _packet.add("imu")
     result = self.codec.encode(_packet)
     assert(result == expected)
 
