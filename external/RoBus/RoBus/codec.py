@@ -1,7 +1,7 @@
 # RoBus Codec
 # 2019 (C) Hoani Bryson
 
-from RoBus import packet
+from . import packet
 
 import json, struct
 
