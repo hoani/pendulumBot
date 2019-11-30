@@ -14,11 +14,13 @@ class TestPacketInstantiation():
   def test_contents(self):
     p = packet.Packet("set", "protocol", tuple([1,2,3]))
     assert(p.category == "set")
-    assert(p.path == "protocol")
-    assert(p.payload[0] == 1)
-    assert(p.payload[1] == 2)
-    assert(p.payload[2] == 3)
-    assert(len(p.payload) == 3)
+    assert(p.paths[0] == "protocol")
+    assert(p.payloads[0][0] == 1)
+    assert(p.payloads[0][1] == 2)
+    assert(p.payloads[0][2] == 3)
+    assert(len(p.paths) == 1)
+    assert(len(p.payloads) == 1)
+    assert(len(p.payloads[0]) == 3)
 
 
 class TestPacketUnpack():

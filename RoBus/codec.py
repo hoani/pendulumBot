@@ -218,24 +218,26 @@ class Codec():
         encoded += self.protocol["end"]
 
       encoded += self.protocol["category"][_packet.category]
-      if _packet.path != None:
-        path = _packet.path.split("/")
-        root = self.protocol["data"][path[0]]
-        address = int(root["_addr"], 16)
-        if len(path) > 1:
-          incr = count_to_path(root, path[1:])
-          if (incr != None):
-            address += incr
-          else:
-            print("invalid address: {}".format(_packet.path))
-            return "".encode("utf-8")
-        encoded += "{:04x}".format(address)
-      if _packet.payload != None:
-        types = extract_types(root, path[1:])
-        count = min(len(types), len(_packet.payload))
-        for i in range(count):
-          encoded += self.protocol["separator"]
-          encoded += encode_types(_packet.payload[i], types[i])
+
+      for (ppath, ppayload) in tuple(zip(_packet.paths, _packet.payloads)):
+        if ppath != None:
+          path = ppath.split("/")
+          root = self.protocol["data"][path[0]]
+          address = int(root["_addr"], 16)
+          if len(path) > 1:
+            incr = count_to_path(root, path[1:])
+            if (incr != None):
+              address += incr
+            else:
+              print("invalid address: {}".format(ppath))
+              return "".encode("utf-8")
+          encoded += "{:04x}".format(address)
+        if ppayload != None:
+          types = extract_types(root, path[1:])
+          count = min(len(types), len(ppayload))
+          for i in range(count):
+            encoded += self.protocol["separator"]
+            encoded += encode_types(ppayload[i], types[i])
 
     encoded += self.protocol["end"]
     return encoded.encode('utf-8')
@@ -279,15 +281,16 @@ class Codec():
     
     return (remainder, packets)
 
-  def unpack(self, packet):
+  def unpack(self, _packet):
     result = {}
-    (paths, settables) = extract_path_settable_pairs(self.protocol["data"], packet.path.split("/"))
-    if paths == [""] and len(packet.payload) == 1:
-      result[packet.path] = {"value": packet.payload[0], "set": settables[0]}
-    else: 
-      for (path_end, settable, value) in tuple(zip(paths, settables, packet.payload)):
-        path = "/".join([packet.path] + [path_end])
-        result[path] = {"value": value, "set": settable}
+    for ppath, ppayload in tuple(zip(_packet.paths, _packet.payloads)) :
+      (paths, settables) = extract_path_settable_pairs(self.protocol["data"], ppath.split("/"))
+      if paths == [""] and len(ppayload) == 1:
+        result[ppath] = {"value": ppayload[0], "set": settables[0]}
+      else: 
+        for (path_end, settable, value) in tuple(zip(paths, settables, ppayload)):
+          path = "/".join([ppath] + [path_end])
+          result[path] = {"value": value, "set": settable}
     return result
 
   def category_from_start(self, start):
