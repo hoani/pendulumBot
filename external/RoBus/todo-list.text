@@ -1,0 +1,12 @@
+
+[] Allow multi packets in a single packet string (eg. "P0800:44:33|P9000:12:6543\n")
+[] Do acks/nacks properly - should be: "AS8000\n" or "NS8000\n"
+  Should have its own class Ack(category, address) or Nack(category, address)
+[] Set up documentation for general behaviour
+
+ROBUS - Robot Bus 
+Similar protocols - NASA has ROBUS-2, which is a hardware comms standard for optical transmision
+
+
+
+
