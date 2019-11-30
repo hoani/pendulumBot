@@ -1,5 +1,5 @@
-from RoBus import packet
-from RoBus._test.fake import fakeCodec
+from .. import packet
+from .fake import fakeCodec
 
 
 class TestPacketInstantiation():
