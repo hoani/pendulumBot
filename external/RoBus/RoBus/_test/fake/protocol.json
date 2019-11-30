@@ -45,12 +45,13 @@
       "int32":    { "type": "i32", "set": true },
       "int64":    { "type": "i64", "set": true },
       "float":    { "type": "float", "set": true },
-      "double":   { "type": "double", "set": true }
+      "double":   { "type": "double", "set": true },
+      "enum":     { "type": ["item 1", "item 2", "item 3", "item 4"], "set": true}
     },
     "control": { "_addr": "8000",
       "disable": { "type": "bool", "set": true },
       "manual": { 
-        "direction": { "type": "enum", "set": true, "enum": ["FW", "BW", "LT", "RT"] },
+        "direction": { "type": ["FW", "BW", "LT", "RT"], "set": true },
         "speed": { "type": "float", "set": true, "bounds": [0.0, 1.0] },
         "duration": { "type": "float", "set": true, "bounds": [0.0, 1.0]}
       },
@@ -65,7 +66,7 @@
         },
         "setpoint": { 
           "value": {"type": "float", "set": true },
-          "profile": { "type": "enum", "set": true, "enum": ["flat", "square", "triangle"]}
+          "profile": { "type": ["flat", "square", "triangle"], "set": true }
         }
       }
     },

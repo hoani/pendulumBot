@@ -304,3 +304,17 @@ class TestSetPayloadDecodeSingle():
     assert(result.category == expected.category)
     assert(result.paths == expected.paths)
     assert(abs(result.payloads[0][0] - expected.payloads[0][0]) < 0.0000001 )
+
+  def test_enum(self):
+    expected = packet.Packet("set", "typecheck/enum", tuple(["item 2"]))
+    (_, [result]) = self.codec.decode(("S200d:01\n").encode('utf-8'))
+    assert(result.category == expected.category)
+    assert(result.paths == expected.paths)
+    assert(result.payloads == expected.payloads)
+
+  def test_enum_invalid(self):
+    expected = packet.Packet("set", "typecheck/enum", tuple([None]))
+    (_, [result]) = self.codec.decode(("S200d:05\n").encode('utf-8'))
+    assert(result.category == expected.category)
+    assert(result.paths == expected.paths)
+    assert(result.payloads == expected.payloads)

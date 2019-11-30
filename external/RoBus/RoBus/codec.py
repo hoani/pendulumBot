@@ -149,6 +149,12 @@ def encode_types(item, typeof):
     return ''.join(format(x, '02x') for x in struct.pack('>f', item))
   elif typeof == "double":
     return ''.join(format(x, '02x') for x in struct.pack('>d', item))
+  elif isinstance(typeof, list):
+    if item in typeof:
+      x = typeof.index(item)
+      return "{:02x}".format(clamp(x, 0x00, 0xff))
+    else:
+      return ""
   else:
     return ""
 
@@ -196,6 +202,12 @@ def decode_types(item, typeof):
   elif typeof == "double":
     [x] = struct.unpack('>d', bytearray.fromhex(item))
     return x
+  elif isinstance(typeof, list):
+    x = decode_unsigned(item, 8)
+    if x < len(typeof):
+      return typeof[x]
+    else:
+      return None
   else:
     return ""
 
@@ -263,7 +275,6 @@ class Codec():
 
     strings = strings[0:-1]
     for string in strings:
-      print(string)
       string = string.decode('utf-8')
       category = None
       path = None
@@ -271,7 +282,6 @@ class Codec():
       category = self.category_from_start(start)
       _packet = packet.Packet(category)
       subpackets = string[1:].split(self.protocol["compound"])
-      print(subpackets)
       for subpacket in subpackets:
         parts = subpacket.split(self.protocol["separator"])
         if parts != ['']:
@@ -279,7 +289,6 @@ class Codec():
           addr = parts[0]
           path = self.path_from_address(addr)
           path_array = path.split("/")
-          print(path)
           root = self.protocol["data"][path_array[0]]
           types = extract_types(root, path_array[1:])
           for (item, typeof) in tuple(zip(parts[1:], types)):
