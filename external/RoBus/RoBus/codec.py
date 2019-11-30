@@ -1,7 +1,7 @@
 # RoBus Codec
 # 2019 (C) Hoani Bryson
 
-from source import packet
+from RoBus import packet
 
 import json, struct
 
@@ -206,57 +206,103 @@ class Codec():
     self._generate_address_map()
     self._generate_category_map()
 
-  def encode(self, packet):
-    encoded = self.protocol["category"][packet.category]
-    if packet.path != None:
-      path = packet.path.split("/")
-      root = self.protocol["data"][path[0]]
-      address = int(root["_addr"], 16)
-      if len(path) > 1:
-        address += count_to_path(root, path[1:])
-      encoded += "{:04x}".format(address)
-    if packet.payload != None:
-      types = extract_types(root, path[1:])
-      count = min(len(types), len(packet.payload))
-      for i in range(count):
-        encoded += self.protocol["separator"]
-        encoded += encode_types(packet.payload[i], types[i])
+  def encode(self, packets):
+    if isinstance(packets, packet.Packet):
+      packets = [packets]
+    elif not isinstance(packets, list):
+      return ""
+
+    encoded = ""
+    for _packet in packets:
+      if encoded != "":
+        encoded += self.protocol["end"]
+
+      encoded += self.protocol["category"][_packet.category]
+
+      internal = ""
+
+      for (ppath, ppayload) in tuple(zip(_packet.paths, _packet.payloads)):
+        if ppath != None:
+          if internal != "":
+            internal += self.protocol["compound"] 
+
+          path = ppath.split("/")
+          root = self.protocol["data"][path[0]]
+          address = int(root["_addr"], 16)
+          if len(path) > 1:
+            incr = count_to_path(root, path[1:])
+            if (incr != None):
+              address += incr
+            else:
+              print("invalid address: {}".format(ppath))
+              return "".encode("utf-8")
+          internal += "{:04x}".format(address)
+        if ppayload != None:
+          types = extract_types(root, path[1:])
+          count = min(len(types), len(ppayload))
+          for i in range(count):
+            internal += self.protocol["separator"]
+            internal += encode_types(ppayload[i], types[i])
+        
+      encoded += internal
 
     encoded += self.protocol["end"]
     return encoded.encode('utf-8')
 
+
+  ## Decodes an incoming packet stream
+  # Inputs: <byte-string> encoded 
+  # Returns: Tuple(<byte-string> remainder, Array[<packet>] Packets)
+  #
   def decode(self, encoded):
-    category = None
-    path = None
-    payload = []
-    encoded = encoded.decode('utf-8')
-    start = encoded[0]
-    parts = encoded[1:-1].split(self.protocol["separator"])
-    category = self.category_from_start(start)
-    if parts != ['']:
-      addr = parts[0]
-      path = self.path_from_address(addr)
-      path_array = path.split("/")
-      root = self.protocol["data"][path_array[0]]
-      types = extract_types(root, path_array[1:])
-      for (item, typeof) in tuple(zip(parts[1:], types)):
-        payload.append(decode_types(item, typeof))
+    strings = encoded.split(self.protocol["end"].encode('utf-8'))
+    remainder = strings[-1]
+    packets = []
+    if len(strings) == 1:
+      return (remainder, [])
 
-      payload = tuple(payload)
-    else:
-      payload = None
+    strings = strings[0:-1]
+    for string in strings:
+      print(string)
+      string = string.decode('utf-8')
+      category = None
+      path = None
+      start = string[0]
+      category = self.category_from_start(start)
+      _packet = packet.Packet(category)
+      subpackets = string[1:].split(self.protocol["compound"])
+      print(subpackets)
+      for subpacket in subpackets:
+        parts = subpacket.split(self.protocol["separator"])
+        if parts != ['']:
+          payload = []
+          addr = parts[0]
+          path = self.path_from_address(addr)
+          path_array = path.split("/")
+          print(path)
+          root = self.protocol["data"][path_array[0]]
+          types = extract_types(root, path_array[1:])
+          for (item, typeof) in tuple(zip(parts[1:], types)):
+            payload.append(decode_types(item, typeof))
+
+          payload = tuple(payload)
+
+          _packet.add(path, payload)
+
+      packets.append(_packet)
     
-    return packet.Packet(category, path, payload)
+    return (remainder, packets)
 
-  def unpack(self, packet):
+  def unpack(self, _packet):
     result = {}
-    (paths, settables) = extract_path_settable_pairs(self.protocol["data"], packet.path.split("/"))
-    if paths == [""] and len(packet.payload) == 1:
-      result[packet.path] = {"value": packet.payload[0], "set": settables[0]}
-    else: 
-      for (path_end, settable, value) in tuple(zip(paths, settables, packet.payload)):
-        path = "/".join([packet.path] + [path_end])
-        result[path] = {"value": value, "set": settable}
+    for ppath, ppayload in tuple(zip(_packet.paths, _packet.payloads)) :
+      (paths, settables) = extract_path_settable_pairs(self.protocol["data"], ppath.split("/"))
+      if paths == [""] and len(ppayload) == 1:
+        result[ppath] = {"value": ppayload[0], "set": settables[0]}
+      else: 
+        for (path_end, settable, value) in tuple(zip(paths, settables, ppayload)):
+          path = "/".join([ppath] + [path_end])
+          result[path] = {"value": value, "set": settable}
     return result
 
   def category_from_start(self, start):
@@ -271,6 +317,7 @@ class Codec():
     except:
       return ""
 
+
     keys = self.address_map.keys()
     for i, key in enumerate(keys):
       if i + 1 == len(keys):
@@ -278,7 +325,7 @@ class Codec():
       else:
         next_key = list(keys)[i + 1]
 
-      if clamp(int(address, 16), int(key, 16), int(next_key, 16)) == int(address, 16):
+      if clamp(int(address, 16), int(key, 16), int(next_key, 16)-1) == int(address, 16):
         diff = int(address, 16) - int(key, 16)
         (path, count) = path_from_count(
           self.protocol["data"][self.address_map[key]], 

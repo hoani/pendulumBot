@@ -1,7 +1,7 @@
-from source import codec, packet
-import json
+from RoBus import codec, packet
+import json, os
 
-CONFIG_PATH = "test/fake/protocol.json"
+CONFIG_PATH = os.path.dirname(__file__) + "/fake/protocol.json"
 
 class TestAckPacketEncode():
   def setup_method(self):
@@ -9,14 +9,21 @@ class TestAckPacketEncode():
     self.codec = codec.Codec(protocol_file_path)
 
   def test_ack_encoding(self):
-    expected = ("A\n").encode('utf-8')
-    _packet = packet.Packet("ack")
+    expected = ("A8000\n").encode('utf-8')
+    _packet = packet.Packet("ack", "control")
     result = self.codec.encode(_packet)
     assert(result == expected)
 
   def test_nack_encoding(self):
-    expected = ("N\n").encode('utf-8')
-    _packet = packet.Packet("nak")
+    expected = ("N8000\n").encode('utf-8')
+    _packet = packet.Packet("nak", "control")
+    result = self.codec.encode(_packet)
+    assert(result == expected)
+
+  def test_nack_compound(self):
+    expected = ("N8000|1200\n").encode('utf-8')
+    _packet = packet.Packet("nak", "control")
+    _packet.add("imu")
     result = self.codec.encode(_packet)
     assert(result == expected)
 
@@ -33,12 +40,69 @@ class TestGetPacketEncode():
     result = self.codec.encode(_packet)
     assert(result == expected)
 
+  def test_invalid_address(self):
+    expected = ("").encode('utf-8')
+    _packet = packet.Packet("get", "protocol/invalid")
+    result = self.codec.encode(_packet)
+    assert(result == expected)
+
   def test_nested_encoding(self):
     expected = ("G0004\n").encode('utf-8')
     _packet = packet.Packet("get", "protocol/version/patch")
     result = self.codec.encode(_packet)
     assert(result == expected)
 
+  def test_can_pass_array(self):
+    expected = ("G0004\n").encode('utf-8')
+    _packet = packet.Packet("get", "protocol/version/patch")
+    result = self.codec.encode([_packet])
+    assert(result == expected)
+
+  def test_compound_packets(self):
+    expected = ("G0003\nG0004\n").encode('utf-8')
+    packets = [
+      packet.Packet("get", "protocol/version/minor"),
+      packet.Packet("get", "protocol/version/patch")
+    ]
+    result = self.codec.encode(packets)
+    assert(result == expected)
+  
+  def test_compound_mixed_packets(self):
+    expected = ("G1201\nB0005\nS2002:0\nG0003\nP0004:1234\n").encode('utf-8')
+    packets = [
+      packet.Packet("get", "imu/accel"),
+      packet.Packet("sub", "protocol/name"),
+      packet.Packet("set", "typecheck/boolean", False),
+      packet.Packet("get", "protocol/version/minor"),
+      packet.Packet("pub", "protocol/version/patch", 0x1234)
+    ]
+    result = self.codec.encode(packets)
+    assert(result == expected)
+
+
+class TestPacketCompoundEncode():
+
+  def setup_method(self):
+    protocol_file_path = CONFIG_PATH
+    self.codec = codec.Codec(protocol_file_path)
+
+  def test_compound_encoding(self):
+    expected = ("G0000|8000\n").encode('utf-8')
+    _packet = packet.Packet("get", "protocol")
+    _packet.add("control")
+    result = self.codec.encode(_packet)
+    assert(result == expected)
+
+  def test_compound_multipacket_encoding(self):
+    expected = ("G0000|8000\nS8000|0000\n").encode('utf-8')
+    packets = [
+      packet.Packet("get", "protocol"),
+      packet.Packet("set", "control")
+    ]
+    packets[0].add("control")
+    packets[1].add("protocol")
+    result = self.codec.encode(packets)
+    assert(result == expected)
 
 
 class TestSetPacketEncodeMultiple():
