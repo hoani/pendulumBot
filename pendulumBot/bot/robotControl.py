@@ -42,7 +42,7 @@ class RobotControl:
       self.auto_speed = 0
     
     elif state == RobotControl.STATE_MANUAL:
-      print("Robo: MANUAL Mode")
+      print("Robo: MANUAL Mode", payload)
       self.manual_period_ms = 500
       if len(payload) > 0:
         self.manual_direction = payload[0]
@@ -50,7 +50,9 @@ class RobotControl:
           self.manual_speed = payload[1]
           if len(payload) > 2:
             self.manual_period_ms = payload[2]
+      print(self.manual_period_ms, payload[2])
       self.update_manual(0)
+      
 
     self.state = state
     

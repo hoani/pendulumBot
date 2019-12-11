@@ -1,14 +1,17 @@
 from pendulumBot.comms import btServer, tcpServer
 
-import time
+import time, sys, os
 from pendulumBot.bot.robotControl import *
 from pendulumBot.bot import motorPair
 from pendulumBot.comms import commandRegister
+from pendulumBot.utilities import vect, imuData
 
 from external.RoBus.RoBus import codec, packet
 
+import datetime
+
 if __name__ == "__main__":
-  use_rcpy = False
+  use_rcpy = True
   use_bluetooth = False
   
   my_codec = codec.Codec('json/protocol.json')
@@ -16,7 +19,7 @@ if __name__ == "__main__":
   hostBtMACAddress = '38:D2:69:E1:11:CB' # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
   hostBtPort = 3
   
-  hostTcpIpAddress = "192.168.1.9"
+  hostTcpIpAddress = "192.168.1.13"
   hostTcpPort = 11337
   
   def check_exit_conditions_rcpy():
@@ -47,6 +50,7 @@ if __name__ == "__main__":
     
   def callback_manual(payload):
     global robo
+
     if len(payload) < 1:
       return False
     if payload[0] == "FW":
@@ -59,7 +63,6 @@ if __name__ == "__main__":
       direction = RobotControl.MANUAL_DIRECTION_RT
     else:
       direction = RobotControl.MANUAL_DIRECTION_FW
-    return True
     
     try:
       speed = float(payload[1])
@@ -67,13 +70,14 @@ if __name__ == "__main__":
       speed = 0.5
     
     duration_ms = 500
-    if len(payload) > 2:
+    if len(payload) >= 2:
       try:
-        duration_ms = int(payload[2])
+        duration_ms = int(payload[2]*1000)
       except:
         pass
     
     robo.set_state(RobotControl.STATE_MANUAL, [direction, speed, duration_ms])
+    return True
   
   
   try:
@@ -96,7 +100,10 @@ if __name__ == "__main__":
 
     last_data = "".encode("utf-8")
     
+    delta_max_ms = 0
+    
     while check_exit_conditions():
+      last_ms = datetime.datetime.now().timestamp()
       
       
       if use_bluetooth:
@@ -120,7 +127,7 @@ if __name__ == "__main__":
       
       if rx != None:
         (addr, data) = rx
-        print("Received: {}".format(data))
+        print("\nReceived: {}".format(data))
 
         (last_data, packets) = my_codec.decode(last_data + data)
 
@@ -136,41 +143,10 @@ if __name__ == "__main__":
                 p.category = "nak"
 
             srx.send(addr, my_codec.encode(p))
-            
-        # lines = data.decode('utf-8').split('\n');
-        # for line in lines:
-        #   if line == "":
-        #     break
-        #   args = line.split(" ");
-        #   cmd = args[0];
-        #   if (len(args) > 1):
-        #     payload = args[1:]
-        #   else:
-        #     payload = []
           
-        #   if commands.execute(cmd, payload):
-        #     srx.send(addr, "{} ack".format(cmd))
-        #   else:
-        #     print("Command not recognized")
-        #     srx.send(addr, "{} not recognized".format(data.decode('utf-8')))
-          
+
       
       imu_data = imu.sample()
-      # imu_packet = (
-      #   "accel {:.2f} {:.2f} {:.2f}\n"
-      #   "gyros {:.2f} {:.2f} {:.2f}\n"
-      #   "magne {:.2f} {:.2f} {:.2f}\n".format(
-      #       imu_data.accelerometer.x,
-      #       imu_data.accelerometer.y,
-      #       imu_data.accelerometer.z,
-      #       imu_data.gyroscope.x,
-      #       imu_data.gyroscope.y,
-      #       imu_data.gyroscope.z,
-      #       imu_data.magnetometer.x,
-      #       imu_data.magnetometer.y,
-      #       imu_data.magnetometer.z,
-      #       )
-      #     ).encode('utf-8')
 
       imu_packet = packet.Packet('pub', 'imu', 
         (
@@ -185,20 +161,26 @@ if __name__ == "__main__":
           imu_data.magnetometer.z
         )
       )
-
-      imu_bytes = my_codec.encode(imu_packet)
       
+      cpu_use_packet = packet.Packet('pub', 'health/os/cpuse', 0.5)
+      batt_v_packet = packet.Packet('pub', 'health/batt/v', 12)
+
+      bytes = my_codec.encode(imu_packet) + my_codec.encode(cpu_use_packet) +  my_codec.encode(batt_v_packet)
       
       if use_bluetooth:
         for addr in bt_socket.get_clients():
-          bt_socket.send(addr, imu_bytes)
+          bt_socket.send(addr, bytes)
         
       for addr in tcp_socket.get_clients():
-        tcp_socket.send(addr, imu_bytes)
+        tcp_socket.send(addr, bytes)
           
         
-              
+      delta_meas_ms = datetime.datetime.now().timestamp() - last_ms
+      delta_max_ms = max(delta_meas_ms, delta_max_ms)
       time.sleep(delta_ms/1000.0)  # sleep some
+      print(('\r'
+            'overhead (s) = {:0.3f} | max overhead (s) = {:0.3f}'
+            ).format(delta_meas_ms, delta_max_ms), end='')
       
           
   except Exception as e:
