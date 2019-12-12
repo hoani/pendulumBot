@@ -1,8 +1,6 @@
-[] Put profiling in __main__ for codec - to profile and measure improvement impacts
-[] Improvement attempt - add address/type/settable registry on initialize
 [] Set up documentation for general behaviour
 
-ROBUS - Robot Bus 
+ROBUS - Robot Bus
 Similar protocols - NASA has ROBUS-2, which is a hardware comms standard for optical transmision
 
 Compound packets:
