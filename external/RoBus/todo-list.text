@@ -1,3 +1,5 @@
+[] Put profiling in __main__ for codec - to profile and measure improvement impacts
+[] Improvement attempt - add address/type/settable registry on initialize
 [] Set up documentation for general behaviour
 
 ROBUS - Robot Bus 
