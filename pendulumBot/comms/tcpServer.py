@@ -31,14 +31,25 @@ class TcpServer(socket.socket):
     for client, addr in self.clients:
       try:
         data = client.recv(size)
+        print(data)
         if data != ''.encode('utf-8'):
           return (addr, data)
         else:
           client.close()
           self.clients.remove((client, addr))
           print("Disconnected from", addr)
-      except:
+      except ConnectionResetError:
+        client.close()
+        self.clients.remove((client, addr))
+        print("Disconnected from", addr)
+      except BlockingIOError:
         pass
+      except Exception as ex:
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
+
     return None
       
   def send(self, addr, data):
