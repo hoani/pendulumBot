@@ -1,8 +1,4 @@
-[] Merge in RoBus improvements
 [] Modularize the pendulumBot.py properly
-[] Add command line interface for setting:
-    * Addresses
-    * Simulator Mode
 [] Integrate logger
 [] Better handling of remote closing
 [] Add Navigation

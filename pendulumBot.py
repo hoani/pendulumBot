@@ -4,23 +4,30 @@ import time, sys, os
 from pendulumBot.bot.robotControl import *
 from pendulumBot.bot import motorPair
 from pendulumBot.comms import commandRegister
-from pendulumBot.utilities import vect, imuData
+from pendulumBot.utilities import vect, imuData, cli
 
 from external.RoBus.RoBus import codec, packet
+
+import json
 
 import datetime
 
 if __name__ == "__main__":
-  use_rcpy = True
-  use_bluetooth = False
-  
-  my_codec = codec.Codec('json/protocol.json')
+  settings_file_path = 'config/settings.json'
+  with open(settings_file_path, "r") as settings_file:
+    settings = json.load(settings_file)
 
-  hostBtMACAddress = '38:D2:69:E1:11:CB' # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
-  hostBtPort = 3
+  args = cli.get_args(settings["default"])
+  simulate = args.simulate
   
-  hostTcpIpAddress = "192.168.1.13"
-  hostTcpPort = 11337
+  my_codec = codec.Codec('config/protocol.json')
+
+  hostBtMACAddress = args.bluetooth[0] # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
+  hostBtPort = args.bluetooth[1]
+  
+  hostTcpIpAddress = args.tcp[0]
+  hostTcpPortCommand = int(args.tcp[1])
+  hostTcpPortLogging = int(args.tcp[2])
   
   def check_exit_conditions_rcpy():
     return rcpy.get_state() != rcpy.EXITING
@@ -28,15 +35,15 @@ if __name__ == "__main__":
   def check_exit_conditions_simulated():
     return True
   
-  if (use_rcpy):
+  if (simulate):
+    from pendulumBot.driver.simulated import motors, imu
+    check_exit_conditions = check_exit_conditions_simulated
+  
+  else:
     import rcpy 
     from pendulumBot.driver.rcpy import motors, imu
     rcpy.set_state(rcpy.RUNNING)
     check_exit_conditions = check_exit_conditions_rcpy
-  else:
-    from pendulumBot.driver.simulated import motors, imu
-    check_exit_conditions = check_exit_conditions_simulated
-  
   
   def callback_auto(payload):
     global robo
@@ -86,9 +93,9 @@ if __name__ == "__main__":
     right = motors.dcMotor(2)
     
     pair = motorPair.MotorPair(left, right)
-    if (use_bluetooth):
+    if (simulate == False):
       bt_socket = btServer.btServer(hostBtMACAddress, hostBtPort)
-    tcp_socket = tcpServer.TcpServer(hostTcpIpAddress, hostTcpPort)
+    tcp_socket = tcpServer.TcpServer(hostTcpIpAddress, hostTcpPortCommand)
     robo = RobotControl(pair)
     imu = imu.Imu()
     delta_ms = 100
@@ -106,10 +113,10 @@ if __name__ == "__main__":
       last_ms = datetime.datetime.now().timestamp()
       
       
-      if use_bluetooth:
+      if simulate == False:
         bt_socket.accept_connections()
       tcp_socket.accept_connections()
-      if use_bluetooth:
+      if simulate == False:
         rx = bt_socket.recv()
         if rx != None:
           srx = bt_socket
@@ -167,7 +174,7 @@ if __name__ == "__main__":
 
       bytes = my_codec.encode(imu_packet) + my_codec.encode(cpu_use_packet) +  my_codec.encode(batt_v_packet)
       
-      if use_bluetooth:
+      if simulate == False:
         for addr in bt_socket.get_clients():
           bt_socket.send(addr, bytes)
         
@@ -189,7 +196,7 @@ if __name__ == "__main__":
     print(exc_type,',', fname,', ln', exc_tb.tb_lineno)
     print(e)
     print("Closing socket")
-    if use_bluetooth:
+    if simulate == False:
       bt_socket.close()
     tcp_socket.close()
     

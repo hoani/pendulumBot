@@ -2,3 +2,4 @@ pybluez
 pyrc
 pytest
 numpy
+argparse
