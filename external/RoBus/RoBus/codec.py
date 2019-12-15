@@ -22,7 +22,7 @@ def count_to_path(root, path):
   count = 0
   if path == None:
     return count_depth(root)
-  
+
   search = path[0]
   if search in root.keys():
     for key in root.keys():
@@ -35,7 +35,7 @@ def count_to_path(root, path):
             count += count_depth(root[key])
         else:
           break
-    
+
     if len(path) > 1:
       incr = count_to_path(root[search], path[1:])
       if (incr != None):
@@ -119,7 +119,7 @@ def extract_path_settable_pairs(root, path):
 
 def clamp(value, min_value, max_value):
   return max(min_value, min(value, max_value))
-  
+
 def encode_types(item, typeof):
   if typeof == "u8":
     return "{:02x}".format(clamp(item, 0x00, 0xff))
@@ -215,6 +215,13 @@ class Codec():
   def __init__(self, protocol_file_path):
     with open(protocol_file_path, "r") as protocol_file:
       self.protocol = json.load(protocol_file)
+    self.address_map = {}
+    self.address_to_path_map = {}
+    self.path_to_address_map = {}
+    self.path_to_types_map = {}
+    self.types_to_path_map = {}
+    self.root_path_to_path_settable_pairs_map = {}
+
     self._generate_address_map()
     self._generate_category_map()
 
@@ -236,26 +243,36 @@ class Codec():
       for (ppath, ppayload) in tuple(zip(_packet.paths, _packet.payloads)):
         if ppath != None:
           if internal != "":
-            internal += self.protocol["compound"] 
+            internal += self.protocol["compound"]
 
           path = ppath.split("/")
           root = self.protocol["data"][path[0]]
-          address = int(root["_addr"], 16)
-          if len(path) > 1:
-            incr = count_to_path(root, path[1:])
-            if (incr != None):
-              address += incr
-            else:
-              print("invalid address: {}".format(ppath))
-              return "".encode("utf-8")
+
+          if ppath in self.path_to_address_map.keys():
+            address = int(self.path_to_address_map[ppath])
+          else:
+            address = int(root["_addr"], 16)
+            if len(path) > 1:
+              incr = self._count_to_path(root, path[1:])
+              if (incr != None):
+                address += incr
+                self.path_to_address_map[ppath] = str(address)
+              else:
+                print("invalid address: {}".format(ppath))
+                return "".encode("utf-8")
+
           internal += "{:04x}".format(address)
         if ppayload != None:
-          types = extract_types(root, path[1:])
+          if ppath in self.path_to_types_map:
+            types = self.path_to_types_map[ppath]
+          else:
+            types = extract_types(root, path[1:])
+            self.path_to_types_map[ppath] = types
           count = min(len(types), len(ppayload))
           for i in range(count):
             internal += self.protocol["separator"]
             internal += encode_types(ppayload[i], types[i])
-        
+
       encoded += internal
 
     encoded += self.protocol["end"]
@@ -263,7 +280,7 @@ class Codec():
 
 
   ## Decodes an incoming packet stream
-  # Inputs: <byte-string> encoded 
+  # Inputs: <byte-string> encoded
   # Returns: Tuple(<byte-string> remainder, Array[<packet>] Packets)
   #
   def decode(self, encoded):
@@ -290,7 +307,12 @@ class Codec():
           path = self.path_from_address(addr)
           path_array = path.split("/")
           root = self.protocol["data"][path_array[0]]
-          types = extract_types(root, path_array[1:])
+          if path in self.path_to_types_map.keys():
+            types = self.path_to_types_map[path]
+          else:
+            types = extract_types(root, path_array[1:])
+            self.path_to_types_map[path] = types
+
           for (item, typeof) in tuple(zip(parts[1:], types)):
             payload.append(decode_types(item, typeof))
 
@@ -299,16 +321,20 @@ class Codec():
           _packet.add(path, payload)
 
       packets.append(_packet)
-    
+
     return (remainder, packets)
 
   def unpack(self, _packet):
     result = {}
     for ppath, ppayload in tuple(zip(_packet.paths, _packet.payloads)) :
-      (paths, settables) = extract_path_settable_pairs(self.protocol["data"], ppath.split("/"))
+      if ppath in self.root_path_to_path_settable_pairs_map:
+        (paths, settables) = self.root_path_to_path_settable_pairs_map[ppath]
+      else:
+        (paths, settables) = extract_path_settable_pairs(self.protocol["data"], ppath.split("/"))
+        self.root_path_to_path_settable_pairs_map[ppath] = (paths, settables)
       if paths == [""] and len(ppayload) == 1:
         result[ppath] = {"value": ppayload[0], "set": settables[0]}
-      else: 
+      else:
         for (path_end, settable, value) in tuple(zip(paths, settables, ppayload)):
           path = "/".join([ppath] + [path_end])
           result[path] = {"value": value, "set": settable}
@@ -326,6 +352,8 @@ class Codec():
     except:
       return ""
 
+    if address in self.address_to_path_map.keys():
+      return self.address_to_path_map[address]
 
     keys = self.address_map.keys()
     for i, key in enumerate(keys):
@@ -337,16 +365,20 @@ class Codec():
       if clamp(int(address, 16), int(key, 16), int(next_key, 16)-1) == int(address, 16):
         diff = int(address, 16) - int(key, 16)
         (path, count) = path_from_count(
-          self.protocol["data"][self.address_map[key]], 
+          self.protocol["data"][self.address_map[key]],
           diff
         )
         if (count == 0):
-          return "/".join([self.address_map[key]] + path)
+          full_path = "/".join([self.address_map[key]] + path)
+          self.path_to_address_map[full_path] = address
+          self.address_to_path_map[address] = full_path
+          return full_path
         else:
           return ""
 
     return ""
 
+  # TODO: This doesn't work for any path which isn't at root!
   def struct_from_address(self, address):
     path = self.path_from_address(address)
     struct = self.protocol["data"]
@@ -364,8 +396,10 @@ class Codec():
         # An incomplete address may or may not be settable
         return None
 
+  def _count_to_path(self, root, path):
+    return count_to_path(root, path)
+
   def _generate_address_map(self):
-    self.address_map = {}
     for key in self.protocol["data"].keys():
       if key[0] != "_":
         if "_addr" in self.protocol["data"][key]:
@@ -377,5 +411,68 @@ class Codec():
     self.category_map = {}
     for key in self.protocol["category"].keys():
       self.category_map[self.protocol["category"][key]] = key
-    
+
+
+def benchmark_encode_ten_thousand_same_packet():
+  codec = Codec('RoBus/_test/fake/protocol.json')
+  p = packet.Packet("set", "control/manual", ("RT", 0.5, 0.5))
+
+  enc = ""
+  for i in range(1, 100000):
+    enc = codec.encode(p)
+
+
+def benchmark_decode_ten_thousand_same_packet():
+  codec = Codec('RoBus/_test/fake/protocol.json')
+  enc = b"s8002:01:60dc9cc9:60dc9cc9\n"
+
+  p = None
+  for i in range(1, 100000):
+    p = codec.decode(enc)
+
+def benchmark_decode_and_unpack_same_packet():
+  codec = Codec('RoBus/_test/fake/protocol.json')
+  enc = b"s8002:01:60dc9cc9:60dc9cc9\n"
+
+  p = None
+  for i in range(1, 100000):
+    (rem, p) = codec.decode(enc)
+    unp = codec.unpack(p[0])
+
+
+def benchmark_encode_decode_ten_thousand_same_packet():
+  codec = Codec('RoBus/_test/fake/protocol.json')
+  enc = b"s8002:01:60dc9cc9:60dc9cc9\n"
+  pac = packet.Packet("set", "control/manual", ("RT", 0.5, 0.5))
+
+  p = None
+  e = None
+  for i in range(1, 100000):
+    p = codec.decode(enc)
+    e = codec.encode(pac)
+
+def benchmark_load():
+  codec = Codec('RoBus/_test/fake/protocol.json')
+
+if __name__ == "__main__":
+  import timeit
+
+  tests = [
+    ("Encoding 100,000 packets:", "benchmark_encode_ten_thousand_same_packet"),
+    ("Decoding 100,000 packets:", "benchmark_decode_ten_thousand_same_packet"),
+    ("Decoding and Unpacking 100000 packets:", "benchmark_decode_and_unpack_same_packet"),
+    ("Encode and decoding a packet 100,000 times:", "benchmark_encode_decode_ten_thousand_same_packet")
+  ]
+
+  for (print_line, function_string) in tests:
+    setup = "from __main__ import "+function_string
+    print("({})".format(function_string))
+    print(print_line)
+    print("                     {:0.3f}us per packet".format(
+    (timeit.timeit(function_string+"()", setup=setup, number=1))*10.0
+
+  ))
+
+
+
 
