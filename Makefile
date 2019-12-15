@@ -1,7 +1,7 @@
 
 
 init:
-	pip3 install pytest
+	pip3 install pytest numpy
 
 test:
 	python3 -m pytest

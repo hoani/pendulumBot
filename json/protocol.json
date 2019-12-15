@@ -71,6 +71,23 @@
         "y": { "type": "float", "set": false }, 
         "z": { "type": "float", "set": false } 
       }
+    },
+    "nav": { "_addr": "1300",
+      "ang": {
+        "roll":  { "type": "float", "set": false }, 
+        "pitch": { "type": "float", "set": false }, 
+        "yaw":   { "type": "float", "set": false } 
+      },
+      "pos": {
+        "x": { "type": "float", "set": false }, 
+        "y": { "type": "float", "set": false }, 
+        "z": { "type": "float", "set": false } 
+      },
+      "vel": {
+        "x": { "type": "float", "set": false }, 
+        "y": { "type": "float", "set": false }, 
+        "z": { "type": "float", "set": false } 
+      }
     }
   }
 }
