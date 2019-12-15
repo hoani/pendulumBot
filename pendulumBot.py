@@ -22,7 +22,7 @@ if __name__ == "__main__":
   
   my_codec = codec.Codec('config/protocol.json')
 
-  hostBtMACAddress = args.bluetooth[0] # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
+  hostBtMACAddress = args.bluetooth[0]
   hostBtPort = args.bluetooth[1]
   
   hostTcpIpAddress = args.tcp[0]
@@ -86,6 +86,7 @@ if __name__ == "__main__":
     robo.set_state(RobotControl.STATE_MANUAL, [direction, speed, duration_ms])
     return True
   
+  sockets = []
   
   try:
     
@@ -93,9 +94,11 @@ if __name__ == "__main__":
     right = motors.dcMotor(2)
     
     pair = motorPair.MotorPair(left, right)
+
     if (simulate == False):
-      bt_socket = btServer.btServer(hostBtMACAddress, hostBtPort)
-    tcp_socket = tcpServer.TcpServer(hostTcpIpAddress, hostTcpPortCommand)
+      sockets.append(btServer.btServer(hostBtMACAddress, hostBtPort))
+    sockets.append(tcpServer.TcpServer(hostTcpIpAddress, hostTcpPortCommand))
+    
     robo = RobotControl(pair)
     imu = imu.Imu()
     delta_ms = 100
@@ -112,25 +115,14 @@ if __name__ == "__main__":
     while check_exit_conditions():
       last_ms = datetime.datetime.now().timestamp()
       
-      
-      if simulate == False:
-        bt_socket.accept_connections()
-      tcp_socket.accept_connections()
-      if simulate == False:
-        rx = bt_socket.recv()
+      for sock in sockets:  
+        sock.accept_connections()
+        rx = sock.recv()
         if rx != None:
-          srx = bt_socket
-        else:
-          rx = tcp_socket.recv()
-          if rx != None:
-            srx = tcp_socket
-      else:
-        rx = tcp_socket.recv()
-        if rx != None:
-          srx = tcp_socket
+          srx = sock
+          break
         
       robo.update(delta_ms)
-      
       
       if rx != None:
         (addr, data) = rx
@@ -147,11 +139,9 @@ if __name__ == "__main__":
               response.add(cmd)
               if commands.execute(cmd, payload) == False:
                 print("Command {} Failed", cmd)
-                p.category = "nak"
+                response.category = "nak"
 
-            srx.send(addr, my_codec.encode(p))
-          
-
+            srx.send(addr, my_codec.encode(response))
       
       imu_data = imu.sample()
 
@@ -172,15 +162,11 @@ if __name__ == "__main__":
       cpu_use_packet = packet.Packet('pub', 'health/os/cpuse', 0.5)
       batt_v_packet = packet.Packet('pub', 'health/batt/v', 12)
 
-      bytes = my_codec.encode(imu_packet) + my_codec.encode(cpu_use_packet) +  my_codec.encode(batt_v_packet)
+      encoded = my_codec.encode(imu_packet) + my_codec.encode(cpu_use_packet) +  my_codec.encode(batt_v_packet)
       
-      if simulate == False:
-        for addr in bt_socket.get_clients():
-          bt_socket.send(addr, bytes)
-        
-      for addr in tcp_socket.get_clients():
-        tcp_socket.send(addr, bytes)
-          
+      for sock in sockets:
+        for addr in sock.get_clients():
+          sock.send(addr, encoded)  
         
       delta_meas_ms = datetime.datetime.now().timestamp() - last_ms
       delta_max_ms = max(delta_meas_ms, delta_max_ms)
@@ -189,16 +175,14 @@ if __name__ == "__main__":
             'overhead (s) = {:0.3f} | max overhead (s) = {:0.3f}'
             ).format(delta_meas_ms, delta_max_ms), end='')
       
-          
   except Exception as e:
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     print(exc_type,',', fname,', ln', exc_tb.tb_lineno)
     print(e)
     print("Closing socket")
-    if simulate == False:
-      bt_socket.close()
-    tcp_socket.close()
+    for sock in sockets:
+      sock.close()
     
   finally:
     pair.stop()
