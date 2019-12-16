@@ -1,9 +1,4 @@
 [] Implement AHRS processing into the robot behaviour
-[] Modularize the pendulumBot.py properly
-  [X] Break setup and loop into separate routines
-  [] Place callbacks into callback classes
-  [] Comment out sections with thier intent
-  [] Turn comments into function calls
 [] Integrate logger
 [] Add Navigation
 [] Add power status
