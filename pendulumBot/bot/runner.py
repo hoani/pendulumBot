@@ -10,8 +10,6 @@ from external.RoBus.RoBus import codec, packet
 
 import datetime
 
-
-
 class RobotRunner:
   def __init__(self, settings):
     args = cli.get_args(settings["default"])
@@ -51,7 +49,7 @@ class RobotRunner:
 
       self.robo = RobotControl(pair)
       self.imu = imu.Imu()
-      self.ahrs = ahrs.AhrsTwoWheeled() 
+      self.ahrs = ahrs.AhrsTwoWheeled()
 
       self.rc_callbacks = commandCallbacks.RobotControlCallbacks(self.robo)
 
@@ -68,12 +66,14 @@ class RobotRunner:
       pair.stop()
 
 
-  def run(self, delta_ms):
+  def run(self, update_period_ms):
+    delta_ms = update_period_ms
     delta_max_ms = 0
     last_data = "".encode("utf-8")
+    next_ms = datetime.datetime.now().timestamp() + update_period_ms
     try:
       while self.check_exit_conditions():
-        # TODO: replace sleep timing with interval timing
+
         last_ms = datetime.datetime.now().timestamp()
         self.robo.update(delta_ms)
 
@@ -144,9 +144,9 @@ class RobotRunner:
         batt_v_packet = packet.Packet('pub', 'health/batt/v', 12)
 
         encoded = (
-          self.codec.encode(imu_packet) + 
-          self.codec.encode(cpu_use_packet) +  
-          self.codec.encode(batt_v_packet) + 
+          self.codec.encode(imu_packet) +
+          self.codec.encode(cpu_use_packet) +
+          self.codec.encode(batt_v_packet) +
           self.codec.encode(ahrs_packet)
         )
 
@@ -154,12 +154,24 @@ class RobotRunner:
           for addr in sock.get_clients():
             sock.send(addr, encoded)
 
+        # Calculate CPU Usage
         delta_meas_ms = datetime.datetime.now().timestamp() - last_ms
         delta_max_ms = max(delta_meas_ms, delta_max_ms)
-        time.sleep(delta_ms/1000.0)  # sleep some
+
         print(('\r'
               'overhead (s) = {:0.3f} | max overhead (s) = {:0.3f}'
               ).format(delta_meas_ms, delta_max_ms), end='')
+
+        # Calculate timing
+        current_ms = datetime.datetime.now().timestamp()
+        sleep_ms = next_ms - current_ms
+        if sleep_ms > 0:
+          time.sleep(sleep_ms * 0.001)
+
+        delta_ms = 0
+        while(next_ms + delta_ms <= current_ms):
+          delta_ms += update_period_ms
+        next_ms += delta_ms
 
     except Exception as e:
       debug.print_exception(e)

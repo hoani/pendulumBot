@@ -11,12 +11,12 @@ def get_settings(settings_file_path):
     settings = json.load(settings_file)
   return settings
 
-      
+
 
 if __name__ == "__main__":
   settings = get_settings('config/settings.json')
   _runner = runner.RobotRunner(settings)
-  delta_ms = 100
+  delta_ms = 50
   _runner.run(delta_ms)
   print("\nBye BeagleBone!")
 
