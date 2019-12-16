@@ -88,6 +88,18 @@
         "y": { "type": "float", "set": false }, 
         "z": { "type": "float", "set": false } 
       }
+    },
+    "ahrs": { "_addr": "1400",
+      "angle": {
+        "pitch":    { "type": "float", "set": false },
+        "yaw":      { "type": "float", "set": false }
+      },
+      "mode": {
+        "cal":      { "type": "bool", "set": true },
+        "still":    { "type": "bool", "set": true },
+        "dynamic":  { "type": "bool", "set": true },
+        "smart":    { "type": "bool", "set": true }
+      }
     }
   }
 }

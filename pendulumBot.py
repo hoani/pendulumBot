@@ -2,9 +2,9 @@ from pendulumBot.comms import btServer, tcpServer
 
 import time, sys, os
 from pendulumBot.bot.robotControl import *
-from pendulumBot.bot import motorPair
-from pendulumBot.comms import commandRegister
-from pendulumBot.utilities import vect, imuData, cli
+from pendulumBot.bot import motorPair, ahrs
+from pendulumBot.comms import commandRegister, commandCallbacks
+from pendulumBot.utilities import vect, imuData, cli, debug
 
 from external.RoBus.RoBus import codec, packet
 
@@ -13,12 +13,7 @@ import json
 import datetime
 
 
-def print_exception(e):
-  exc_type, exc_obj, exc_tb = sys.exc_info()
-  fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-  print(exc_type,',', fname,', ln', exc_tb.tb_lineno)
-  print(e)
-  print("Closing socket")
+
 
 def get_settings(settings_file_path):
   settings_file_path = 'config/settings.json'
@@ -31,47 +26,6 @@ def check_exit_conditions_rcpy():
 
 def check_exit_conditions_simulated():
   return True
-
-class RobotControlCallbacks:
-  def __init__(self, control):
-    self.control = control
-
-  def callback_auto(payload):
-    self.control.set_state(RobotControl.STATE_AUTO, payload)
-    return True
-
-  def callback_disable(payload):
-    self.control.set_state(RobotControl.STATE_DISABLED, None)
-    return True
-
-  def callback_manual(payload):
-    if len(payload) < 1:
-      return False
-    if payload[0] == "FW":
-      direction = RobotControl.MANUAL_DIRECTION_FW
-    elif payload[0] == "BW":
-      direction = RobotControl.MANUAL_DIRECTION_BW
-    elif payload[0] == "LT":
-      direction = RobotControl.MANUAL_DIRECTION_LT
-    elif payload[0] == "RT":
-      direction = RobotControl.MANUAL_DIRECTION_RT
-    else:
-      return False
-
-    try:
-      speed = float(payload[1])
-    except:
-      speed = 0.5
-
-    duration_ms = 500
-    if len(payload) >= 2:
-      try:
-        duration_ms = int(payload[2]*1000)
-      except:
-        pass
-
-    self.control.set_state(RobotControl.STATE_MANUAL, [direction, speed, duration_ms])
-    return True
 
 
 def setup(settings):
@@ -112,28 +66,27 @@ def setup(settings):
 
     robo = RobotControl(pair)
     imu = imu.Imu()
+    my_ahrs = ahrs.AhrsTwoWheeled() 
 
-    control_cbs = RobotControlCallbacks(robo)
+    rc_callbacks = commandCallbacks.RobotControlCallbacks(robo)
 
-    commands = commandRegister.CommandRegister()
-    commands.add("control/automatic", control_cbs.callback_auto)
-    commands.add("control/disable",   control_cbs.callback_disable)
-    commands.add("control/manual",    control_cbs.callback_manual)
+    registry = commandRegister.CommandRegister()
+    rc_callbacks.register(registry)
 
     last_data = "".encode("utf-8")
 
 
   except Exception as e:
-    print_exception()
+    debug.print_exception(e)
     for sock in sockets:
       sock.close()
 
   finally:
     pair.stop()
 
-  return (robo, sockets, my_codec, imu, check_exit_conditions)
+  return (robo, sockets, my_codec, imu, my_ahrs, check_exit_conditions)
 
-def run(robo, sockets, my_codec, imu, check_exit_conditions, delta_ms):
+def run(robo, sockets, my_codec, imu, my_ahrs, check_exit_conditions, delta_ms):
   delta_max_ms = 0
   try:
     while check_exit_conditions():
@@ -182,10 +135,32 @@ def run(robo, sockets, my_codec, imu, check_exit_conditions, delta_ms):
         )
       )
 
+      ahrs_imu_data = imuData.ImuData(
+        vect.Vec3(
+          -imu_data.accelerometer.z,
+          -imu_data.accelerometer.x,
+          imu_data.accelerometer.y
+        ),
+        vect.Vec3(
+          -imu_data.gyroscope.z,
+          -imu_data.gyroscope.x,
+          imu_data.gyroscope.y
+        ),
+        vect.Vec3(
+          -imu_data.magnetometer.z,
+          -imu_data.magnetometer.x,
+          imu_data.magnetometer.y
+        )
+      )
+      my_ahrs.update(delta_ms/1000.0, ahrs_imu_data)
+      angles = my_ahrs.get()
+
+      ahrs_packet = packet.Packet('pub', 'ahrs/angle', (angles.pitch, angles.yaw))
+
       cpu_use_packet = packet.Packet('pub', 'health/os/cpuse', 0.5)
       batt_v_packet = packet.Packet('pub', 'health/batt/v', 12)
 
-      encoded = my_codec.encode(imu_packet) + my_codec.encode(cpu_use_packet) +  my_codec.encode(batt_v_packet)
+      encoded = my_codec.encode(imu_packet) + my_codec.encode(cpu_use_packet) +  my_codec.encode(batt_v_packet) + my_codec.encode(ahrs_packet)
 
       for sock in sockets:
         for addr in sock.get_clients():
@@ -199,7 +174,7 @@ def run(robo, sockets, my_codec, imu, check_exit_conditions, delta_ms):
             ).format(delta_meas_ms, delta_max_ms), end='')
 
   except Exception as e:
-    print_exception(e)
+    debug.print_exception(e)
     for sock in sockets:
       sock.close()
 
@@ -213,6 +188,6 @@ if __name__ == "__main__":
   settings = get_settings('config/settings.json')
   items = setup(settings)
   delta_ms = 100
-  run(items[0], items[1], items[2], items[3], items[4], delta_ms)
+  run(items[0], items[1], items[2], items[3], items[4], items[5], delta_ms)
 
 
