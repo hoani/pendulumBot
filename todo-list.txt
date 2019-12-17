@@ -1,5 +1,9 @@
 [] Implement AHRS processing into the robot behaviour
-[] Integrate logger
+[] Integrate logger packets
+  [] Use the log port to send csv logs (possibly string formatted for simplicity)
+  [] Add a special command type for starting and stopping logs to core protocol
+[] Look at separaing telemetry updates from the main run cycle so that telemetry updates are performed less frequently
+[] Structure sampling/processing of data better
 [] Add Navigation
 [] Add power status
 [] Add servo

@@ -16,6 +16,9 @@ class RobotRunner:
     simulate = args.simulate
 
     self.codec = codec.Codec('config/protocol.json')
+    self.cpu_usage = 0
+    self.delta_max_s = 0.0
+    self.max_cpu_usage = 0.0
 
     hostBtMACAddress = args.bluetooth[0]
     hostBtPort = args.bluetooth[1]
@@ -25,14 +28,16 @@ class RobotRunner:
     hostTcpPortLogging = int(args.tcp[2])
 
     if (simulate):
-      from pendulumBot.driver.simulated import motors, imu
+      from pendulumBot.driver.simulated import motors, imu, adc
       self.check_exit_conditions = self._check_exit_conditions_simulated
+      self.adc = adc
 
     else:
       import rcpy
-      from pendulumBot.driver.rcpy import motors, imu
+      from pendulumBot.driver.rcpy import motors, imu, adc
       rcpy.set_state(rcpy.RUNNING)
       self.check_exit_conditions = self._check_exit_conditions_rcpy
+      self.adc = adc
 
     self.sockets = []
 
@@ -59,8 +64,7 @@ class RobotRunner:
       self.registry = commandRegister.CommandRegister()
       self.rc_callbacks.register(self.registry)
 
-      self.delta_max_s = 0.0
-      self.max_cpu_usage = 0.0
+
 
 
     except Exception as e:
@@ -146,8 +150,8 @@ class RobotRunner:
 
         ahrs_packet = packet.Packet('pub', 'ahrs/angle', (angles.pitch, angles.yaw))
 
-        cpu_use_packet = packet.Packet('pub', 'health/os/cpuse', 0.5)
-        batt_v_packet = packet.Packet('pub', 'health/batt/v', 12)
+        cpu_use_packet = packet.Packet('pub', 'health/os/cpuse', self.cpu_usage)
+        batt_v_packet = packet.Packet('pub', 'health/batt/v', self.adc.battery_voltage())
 
         encoded = (
           self.codec.encode(imu_packet) +
@@ -164,7 +168,7 @@ class RobotRunner:
         self._calculate_cpu_usage(last_s, update_period_ms * 0.001)
 
         # Calculate timing
-        delta_ms = self._rest_until(next_ms)
+        delta_ms = self._rest_until(next_ms, update_period_ms)
         next_ms += delta_ms
 
 
@@ -194,7 +198,7 @@ class RobotRunner:
           '| max overhead (s) = {:0.3f} | max usage (%) = {:0.1f} ||'
           ).format(delta_meas_s, self.cpu_usage, self.delta_max_s, self.max_cpu_usage), end='')
 
-  def _rest_until(self, next_ms):
+  def _rest_until(self, next_ms, update_period_ms):
     current_ms = datetime.datetime.now().timestamp()
     sleep_ms = next_ms - current_ms
     if sleep_ms > 0:

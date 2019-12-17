@@ -2,7 +2,7 @@ from pendulumBot.utilities import vect, imuData
 import random
 
 def noise(size):
-  return size/2 - size*random.random()
+  return size/2.0 - size*random.random()
 
 class Imu:
   def __init__(self, mapping = None, sign = None):
