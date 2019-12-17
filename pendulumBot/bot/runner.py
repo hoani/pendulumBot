@@ -48,7 +48,10 @@ class RobotRunner:
       self.sockets.append(tcpServer.TcpServer(hostTcpIpAddress, hostTcpPortCommand))
 
       self.robo = RobotControl(pair)
-      self.imu = imu.Imu()
+      self.imu = imu.Imu(
+        mapping = vect.Vec3(2,0,1),
+        sign = vect.Vec3(-1,-1,1)
+      )
       self.ahrs = ahrs.AhrsTwoWheeled()
 
       self.rc_callbacks = commandCallbacks.RobotControlCallbacks(self.robo)
