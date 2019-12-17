@@ -56,6 +56,9 @@ class RobotRunner:
       self.registry = commandRegister.CommandRegister()
       self.rc_callbacks.register(self.registry)
 
+      self.delta_max_s = 0.0
+      self.max_cpu_usage = 0.0
+
 
     except Exception as e:
       debug.print_exception(e)
@@ -74,7 +77,7 @@ class RobotRunner:
     try:
       while self.check_exit_conditions():
 
-        last_ms = datetime.datetime.now().timestamp()
+        last_s = time.time()
         self.robo.update(delta_ms)
 
         # comms_update(sockets)
@@ -154,24 +157,13 @@ class RobotRunner:
           for addr in sock.get_clients():
             sock.send(addr, encoded)
 
-        # Calculate CPU Usage
-        delta_meas_ms = datetime.datetime.now().timestamp() - last_ms
-        delta_max_ms = max(delta_meas_ms, delta_max_ms)
-
-        print(('\r'
-              'overhead (s) = {:0.3f} | max overhead (s) = {:0.3f}'
-              ).format(delta_meas_ms, delta_max_ms), end='')
+        # Note, this must be done at the end of a step
+        self._calculate_cpu_usage(last_s, update_period_ms * 0.001)
 
         # Calculate timing
-        current_ms = datetime.datetime.now().timestamp()
-        sleep_ms = next_ms - current_ms
-        if sleep_ms > 0:
-          time.sleep(sleep_ms * 0.001)
-
-        delta_ms = 0
-        while(next_ms + delta_ms <= current_ms):
-          delta_ms += update_period_ms
+        delta_ms = self._rest_until(next_ms)
         next_ms += delta_ms
+
 
     except Exception as e:
       debug.print_exception(e)
@@ -186,3 +178,27 @@ class RobotRunner:
 
   def _check_exit_conditions_simulated(self):
     return True
+
+  def _calculate_cpu_usage(self, last_s, update_period_s):
+    delta_meas_s = time.time() - last_s
+    self.delta_max_s = max(delta_meas_s, self.delta_max_s)
+
+    self.cpu_usage = 100.0 * (delta_meas_s / update_period_s)
+    self.max_cpu_usage = max(self.max_cpu_usage, self.cpu_usage)
+
+    print(('\r'
+          '|| overhead (s) = {:0.3f} | cpu usage (%) = {:0.1f} |'
+          '| max overhead (s) = {:0.3f} | max usage (%) = {:0.1f} ||'
+          ).format(delta_meas_s, self.cpu_usage, self.delta_max_s, self.max_cpu_usage), end='')
+
+  def _rest_until(self, next_ms):
+    current_ms = datetime.datetime.now().timestamp()
+    sleep_ms = next_ms - current_ms
+    if sleep_ms > 0:
+      time.sleep(sleep_ms * 0.001)
+
+    delta_ms = 0
+    while(next_ms + delta_ms <= current_ms):
+      delta_ms += update_period_ms
+
+    return delta_ms
