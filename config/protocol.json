@@ -8,7 +8,7 @@
     "get": "G",
     "set": "S",
     "ack": "A",
-    "nak": "N", 
+    "nak": "N",
     "sub": "B",
     "pub": "P"
   },
@@ -16,7 +16,7 @@
   "compound": "|",
   "end": "\n",
   "data": {
-    "protocol": { "_addr": "0000", 
+    "protocol": { "_addr": "0000",
       "version": {
         "major": { "type": "u8", "set": false },
         "minor": { "type": "u8", "set": false },
@@ -24,9 +24,13 @@
       },
       "name": { "type": "string", "set": false }
     },
-    "ping": { "_addr": "1000", "size": 1, "type":  "bool", "set": false },
+    "ping": { "_addr": "1000", "type":  "bool", "set": false },
+    "rlog": { "_addr": "1010",
+      "start": { "type": "bool", "set": true  },
+      "stop":  { "type": "bool", "set": false }
+    },
     "health": { "_addr": "1100",
-      "batt": { 
+      "batt": {
         "v": { "type": "float", "set": false }
       },
       "os": {
@@ -35,12 +39,12 @@
     },
     "control": { "_addr": "8000",
       "disable": { "type": "bool", "set": true },
-      "manual": { 
+      "manual": {
         "direction": { "type": ["FW", "BW", "LT", "RT"], "set": true },
         "speed": { "type": "float", "set": true, "bounds": [0.0, 1.0] },
         "duration": { "type": "float", "set": true, "bounds": [0.0, 1.0]}
       },
-      "automatic": { 
+      "automatic": {
         "speed": { "type": "float", "set": true, "bounds": [0.0, 1.0] }
       },
       "pid": {
@@ -49,7 +53,7 @@
           "ki": { "type": "float", "set": true },
           "kd": { "type": "float", "set": true }
         },
-        "setpoint": { 
+        "setpoint": {
           "value": {"type": "float", "set": true },
           "profile": { "type": ["flat", "square", "triangle"], "set": true }
         }
@@ -57,36 +61,36 @@
     },
     "imu": { "_addr": "1200",
       "accel": {
-        "x": { "type": "float", "set": false }, 
-        "y": { "type": "float", "set": false }, 
-        "z": { "type": "float", "set": false } 
+        "x": { "type": "float", "set": false },
+        "y": { "type": "float", "set": false },
+        "z": { "type": "float", "set": false }
       },
       "gyros": {
-        "x": { "type": "float", "set": false }, 
-        "y": { "type": "float", "set": false }, 
-        "z": { "type": "float", "set": false } 
+        "x": { "type": "float", "set": false },
+        "y": { "type": "float", "set": false },
+        "z": { "type": "float", "set": false }
       },
       "magne": {
-        "x": { "type": "float", "set": false }, 
-        "y": { "type": "float", "set": false }, 
-        "z": { "type": "float", "set": false } 
+        "x": { "type": "float", "set": false },
+        "y": { "type": "float", "set": false },
+        "z": { "type": "float", "set": false }
       }
     },
     "nav": { "_addr": "1300",
       "ang": {
-        "roll":  { "type": "float", "set": false }, 
-        "pitch": { "type": "float", "set": false }, 
-        "yaw":   { "type": "float", "set": false } 
+        "roll":  { "type": "float", "set": false },
+        "pitch": { "type": "float", "set": false },
+        "yaw":   { "type": "float", "set": false }
       },
       "pos": {
-        "x": { "type": "float", "set": false }, 
-        "y": { "type": "float", "set": false }, 
-        "z": { "type": "float", "set": false } 
+        "x": { "type": "float", "set": false },
+        "y": { "type": "float", "set": false },
+        "z": { "type": "float", "set": false }
       },
       "vel": {
-        "x": { "type": "float", "set": false }, 
-        "y": { "type": "float", "set": false }, 
-        "z": { "type": "float", "set": false } 
+        "x": { "type": "float", "set": false },
+        "y": { "type": "float", "set": false },
+        "z": { "type": "float", "set": false }
       }
     },
     "ahrs": { "_addr": "1400",

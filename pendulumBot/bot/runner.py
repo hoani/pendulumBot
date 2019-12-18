@@ -3,7 +3,7 @@ from pendulumBot.comms import btServer, tcpServer
 import time, sys, os
 from pendulumBot.bot.robotControl import *
 from pendulumBot.bot import motorPair, ahrs
-from pendulumBot.comms import commandRegister, commandCallbacks
+from pendulumBot.comms import commandRegister, commandCallbacks, remoteLogger
 from pendulumBot.utilities import vect, imuData, cli, debug
 
 from external.RoBus.RoBus import codec, packet
@@ -52,6 +52,9 @@ class RobotRunner:
         self.sockets.append(btServer.btServer(hostBtMACAddress, hostBtPort))
       self.sockets.append(tcpServer.TcpServer(hostTcpIpAddress, hostTcpPortCommand))
 
+      self.logger_socket = tcpServer.TcpServer(hostTcpIpAddress, hostTcpPortLogging)
+      self.remote_logger = remoteLogger.RemoteLogger(self.logger_socket)
+
       self.robo = RobotControl(pair)
       self.imu = imu.Imu(
         mapping = vect.Vec3(2,0,1),
@@ -64,7 +67,25 @@ class RobotRunner:
       self.registry = commandRegister.CommandRegister()
       self.rc_callbacks.register(self.registry)
 
+      self.remote_logger.add("time ms")
 
+      self.remote_logger.add("imu-acc-x m.s-2")
+      self.remote_logger.add("imu-acc-y m.s-2")
+      self.remote_logger.add("imu-acc-z m.s-2")
+
+      self.remote_logger.add("imu-gyr-x deg.s-1")
+      self.remote_logger.add("imu-gyr-y deg.s-1")
+      self.remote_logger.add("imu-gyr-z deg.s-1")
+
+      self.remote_logger.add("imu-mag-x mT")
+      self.remote_logger.add("imu-mag-y mT")
+      self.remote_logger.add("imu-mag-z mT")
+
+      self.remote_logger.add("ahrs-pitch deg")
+      self.remote_logger.add("ahrs-yaw deg")
+
+      self.remote_logger.add("cpu %")
+      self.remote_logger.add("batt V")
 
 
     except Exception as e:
@@ -88,6 +109,9 @@ class RobotRunner:
         self.robo.update(delta_ms)
 
         # comms_update(sockets)
+        self.logger_socket.accept_connections()
+        _ = self.logger_socket.recv() # Only used to determine if a connection has dropped
+
         for sock in self.sockets:
           sock.accept_connections()
           rx = sock.recv()
@@ -128,30 +152,14 @@ class RobotRunner:
           )
         )
 
-        ahrs_imu_data = imuData.ImuData(
-          vect.Vec3(
-            -imu_data.accelerometer.z,
-            -imu_data.accelerometer.x,
-            imu_data.accelerometer.y
-          ),
-          vect.Vec3(
-            -imu_data.gyroscope.z,
-            -imu_data.gyroscope.x,
-            imu_data.gyroscope.y
-          ),
-          vect.Vec3(
-            -imu_data.magnetometer.z,
-            -imu_data.magnetometer.x,
-            imu_data.magnetometer.y
-          )
-        )
-        self.ahrs.update(delta_ms/1000.0, ahrs_imu_data)
+        self.ahrs.update(delta_ms/1000.0, imu_data)
         angles = self.ahrs.get()
 
         ahrs_packet = packet.Packet('pub', 'ahrs/angle', (angles.pitch, angles.yaw))
 
+        battery_v = self.adc.battery_voltage()
         cpu_use_packet = packet.Packet('pub', 'health/os/cpuse', self.cpu_usage)
-        batt_v_packet = packet.Packet('pub', 'health/batt/v', self.adc.battery_voltage())
+        batt_v_packet = packet.Packet('pub', 'health/batt/v', battery_v)
 
         encoded = (
           self.codec.encode(imu_packet) +
@@ -166,6 +174,23 @@ class RobotRunner:
 
         # Note, this must be done at the end of a step
         self._calculate_cpu_usage(last_s, update_period_ms * 0.001)
+
+        self.remote_logger.set("time ms", "{:d}".format(self.remote_logger.current_ms))
+        self.remote_logger.set("imu-acc-x m.s-2", "{:0.03f}".format(imu_data.accelerometer.x))
+        self.remote_logger.set("imu-acc-y m.s-2", "{:0.03f}".format(imu_data.accelerometer.y))
+        self.remote_logger.set("imu-acc-z m.s-2", "{:0.03f}".format(imu_data.accelerometer.z))
+        self.remote_logger.set("imu-gyr-x deg.s-1", "{:0.02f}".format(imu_data.gyroscope.x))
+        self.remote_logger.set("imu-gyr-y deg.s-1", "{:0.02f}".format(imu_data.gyroscope.x))
+        self.remote_logger.set("imu-gyr-z deg.s-1", "{:0.02f}".format(imu_data.gyroscope.x))
+        self.remote_logger.set("imu-mag-x mT", "{:0.02f}".format(imu_data.magnetometer.x))
+        self.remote_logger.set("imu-mag-y mT", "{:0.02f}".format(imu_data.magnetometer.x))
+        self.remote_logger.set("imu-mag-z mT", "{:0.02f}".format(imu_data.magnetometer.x))
+        self.remote_logger.set("ahrs-pitch deg", "{:0.02}".format(angles.pitch))
+        self.remote_logger.set("ahrs-yaw deg", "{:0.02}".format(angles.yaw))
+        self.remote_logger.set("cpu %", "{:0.02}".format(self.cpu_usage))
+        self.remote_logger.set("batt V", "{:0.03}".format(battery_v))
+
+        self.remote_logger.update(delta_ms)
 
         # Calculate timing
         delta_ms = self._rest_until(next_ms, update_period_ms)

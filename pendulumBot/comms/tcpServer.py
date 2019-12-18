@@ -1,4 +1,5 @@
 import socket
+from pendulumBot.utilities import debug
 
 class TcpServer(socket.socket):
   def __init__(self, ip_addr, port):
@@ -9,12 +10,12 @@ class TcpServer(socket.socket):
     super().setblocking(False)
     super().listen(10) # Handles up to 10 dropped connections
     self.clients = []
-    
+
   def accept_connections(self):
     try:
       client, addr = super().accept()
       client.setblocking(False)
-      
+
       # Update client info if we have already connected before
       for idx, (stored_client, stored_addr) in enumerate(self.clients):
         if (stored_addr == addr):
@@ -26,7 +27,7 @@ class TcpServer(socket.socket):
         self.clients.append((client, addr))
     except:
       pass
-    
+
   def recv(self, size=1024):
     for client, addr in self.clients:
       try:
@@ -44,35 +45,35 @@ class TcpServer(socket.socket):
         print("Disconnected from", addr)
       except BlockingIOError:
         pass
-      except Exception as ex:
-        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-        message = template.format(type(ex).__name__, ex.args)
-        print(message)
-
+      except Exception as e:
+        debug.print_exception(e)
 
     return None
-      
+
   def send(self, addr, data):
     if isinstance(data, str):
       data = data.encode('utf-8')
     for client, caddr in self.clients:
-      if addr == caddr:
+      if addr == caddr or addr == None:
         try:
           client.send(data)
         except Exception as e:
-          print(e)
-        
+          debug.print_exception(e)
+
+  def send_all(self, addr, data):
+    self.send(None, data)
+
+
   def get_clients(self):
     addresses = []
     for client, addr in self.clients:
       addresses.append(addr)
-      
+
     return addresses
-    
+
   def close(self):
     for client, addr in self.clients:
       client.close()
     super().close()
     self.clients = []
-    
-    
+
