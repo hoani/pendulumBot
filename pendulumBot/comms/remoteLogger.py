@@ -40,5 +40,8 @@ class RemoteLogger:
     self.current_ms = 0
     self.next_ms = self.period_ms
 
+    line = self.csv_lines.header_string()
+    self.socket.send_all(line)
+
   def stop(self):
     self.started = False
