@@ -1,16 +1,15 @@
-class RemoteLoggingCallbacks:
+class RemoteLogCallbacks:
   def __init__(self, logger):
     self._logger = logger
 
   def register(self, registry):
-    registry.add("rlog/start", self.callback_start)
-    registry.add("rlog/stop", self.callback_stop)
+    registry.add("rlog/active", self.callback_active)
 
-  def callback_start(self, payload):
-    self._logger.start()
-
-  def callback_stop(self, payload):
-    self._logger.stop()
+  def callback_active(self, payload):
+    if payload[0] == True:
+      self._logger.start()
+    else:
+      self._logger.stop()
 
 
 class RobotControlCallbacks:

@@ -5,7 +5,7 @@
       "port": 3
     },
     "tcp": {
-      "address": "192.168.1.13",
+      "address": "127.0.0.1",
       "port_command": 11337,
       "port_log": 11338
     }

@@ -63,9 +63,11 @@ class RobotRunner:
       self.ahrs = ahrs.AhrsTwoWheeled()
 
       self.rc_callbacks = commandCallbacks.RobotControlCallbacks(self.robo)
+      self.rl_callbacks = commandCallbacks.RemoteLogCallbacks(self.remote_logger)
 
       self.registry = commandRegister.CommandRegister()
       self.rc_callbacks.register(self.registry)
+      self.rl_callbacks.register(self.registry)
 
       self.remote_logger.add("time ms")
 
@@ -128,7 +130,7 @@ class RobotRunner:
                 response = packet.Packet("ack")
                 for (cmd, payload) in tuple(zip(p.paths, p.payloads)):
                   response.add(cmd)
-                  if commands.execute(cmd, payload) == False:
+                  if self.registry.execute(cmd, payload) == False:
                     print("Command {} Failed", cmd)
                     response.category = "nak"
 

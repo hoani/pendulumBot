@@ -26,8 +26,7 @@
     },
     "ping": { "_addr": "1000", "type":  "bool", "set": false },
     "rlog": { "_addr": "1010",
-      "start": { "type": "bool", "set": true  },
-      "stop":  { "type": "bool", "set": false }
+      "active": { "type": "bool", "set": true }
     },
     "health": { "_addr": "1100",
       "batt": {
