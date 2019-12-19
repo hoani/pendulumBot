@@ -8,7 +8,7 @@ class RemoteLogger:
     self.current_ms = 0
     self.next_ms = 0
     self.started = False
-    self.csv_lines = csvLines.CsvLines(',', '/n')
+    self.csv_lines = csvLines.CsvLines(',', '\n')
 
   def add(self, key):
     self.csv_lines.add(key)
@@ -19,7 +19,7 @@ class RemoteLogger:
   def update(self, delta_ms):
     if self.started:
       self.current_ms += delta_ms
-      if self.period_ms == EVERY_UPDATE:
+      if self.period_ms == RemoteLogger.EVERY_UPDATE:
         post = True
       elif self.next_ms <= self.current_ms:
         post = True
@@ -38,7 +38,7 @@ class RemoteLogger:
   def start(self):
     self.started = True
     self.current_ms = 0
-    self.next_ms = delta_ms
+    self.next_ms = self.period_ms
 
   def stop(self):
     self.started = False

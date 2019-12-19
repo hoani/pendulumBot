@@ -1,6 +1,6 @@
 
 class CsvLines(dict):
-  TERMINATOR = "/n"
+  TERMINATOR = "\n"
   SEPARATOR = ","
   def __init__(self, separator=SEPARATOR, terminator=TERMINATOR):
     super().__init__()

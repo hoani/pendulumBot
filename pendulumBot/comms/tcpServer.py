@@ -60,7 +60,7 @@ class TcpServer(socket.socket):
         except Exception as e:
           debug.print_exception(e)
 
-  def send_all(self, addr, data):
+  def send_all(self, data):
     self.send(None, data)
 
 

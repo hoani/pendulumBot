@@ -7,11 +7,11 @@ class TestCsvLinesBasic:
 
   def test_empty_header(self):
     log = csvLines.CsvLines()
-    assert(log.header_string() == "/n")
+    assert(log.header_string() == "\n")
 
   def test_empty_pop(self):
     log = csvLines.CsvLines()
-    assert(log.pop_string() == "/n")
+    assert(log.pop_string() == "\n")
 
   def test_change_terminator(self):
     log = csvLines.CsvLines(terminator = ":")
@@ -24,12 +24,12 @@ class TestCsvLinesHeader:
 
   def test_single_item(self):
     self.log['Item1'] = None
-    assert(self.log.header_string() == "Item1/n")
+    assert(self.log.header_string() == "Item1\n")
 
   def test_multiple_items(self):
     self.log['Item1'] = None
     self.log['AnotherOne'] = None
-    assert(self.log.header_string() == "Item1,AnotherOne/n")
+    assert(self.log.header_string() == "Item1,AnotherOne\n")
 
 
 class TestCsvLinesReady:
@@ -63,14 +63,14 @@ class TestCsvLinesPop:
   def test_ready(self):
     self.log['Item1'] = '1'
     self.log['Item2'] = '2'
-    assert(self.log.pop_string() == "1,2/n")
+    assert(self.log.pop_string() == "1,2\n")
 
   def test_custom_separator(self):
     self.log = csvLines.CsvLines(separator="::FOO::")
     self.log['Item1'] = '1'
     self.log['Item2'] = '2'
-    assert(self.log.header_string() == "Item1::FOO::Item2/n")
-    assert(self.log.pop_string() == "1::FOO::2/n")
+    assert(self.log.header_string() == "Item1::FOO::Item2\n")
+    assert(self.log.pop_string() == "1::FOO::2\n")
 
   def test_pop_consumes_all_lines(self):
     self.log = csvLines.CsvLines()
