@@ -101,10 +101,9 @@ class RobotRunner:
     delta_ms = update_period_ms
     delta_max_ms = 0
     last_data = "".encode("utf-8")
-    next_ms = datetime.datetime.now().timestamp() + update_period_ms
+    next_ms = datetime.datetime.now().timestamp() * 1000.0 + update_period_ms
     try:
       while self.check_exit_conditions():
-
         last_s = time.time()
         self.robo.update(delta_ms)
 
@@ -224,13 +223,14 @@ class RobotRunner:
           ).format(delta_meas_s, self.cpu_usage, self.delta_max_s, self.max_cpu_usage), end='')
 
   def _rest_until(self, next_ms, update_period_ms):
-    current_ms = datetime.datetime.now().timestamp()
+    current_ms = datetime.datetime.now().timestamp()*1000.0
     sleep_ms = next_ms - current_ms
-    if sleep_ms > 0:
+    if sleep_ms > 0.0:
       time.sleep(sleep_ms * 0.001)
+      delta_ms = update_period_ms
+    else:
+      delta_ms = 0.0
+      while(sleep_ms + delta_ms < 0):
+        delta_ms += update_period_ms
 
-    delta_ms = 0
-    while(next_ms + delta_ms <= current_ms):
-      delta_ms += update_period_ms
-
-    return delta_ms
+    return int(delta_ms)
