@@ -1,3 +1,5 @@
+from pendulumBot.bot import robotControl
+
 class RemoteLogCallbacks:
   def __init__(self, logger):
     self._logger = logger
@@ -22,24 +24,24 @@ class RobotControlCallbacks:
     registry.add(   "control/manual", self.callback_manual )
 
   def callback_auto(self, payload):
-    self.control.set_state(RobotControl.STATE_AUTO, payload)
+    self.control.set_state(robotControl.RobotControl.STATE_AUTO, payload)
     return True
 
   def callback_disable(self, payload):
-    self.control.set_state(RobotControl.STATE_DISABLED, None)
+    self.control.set_state(robotControl.RobotControl.STATE_DISABLED, None)
     return True
 
   def callback_manual(self, payload):
     if len(payload) < 1:
       return False
     if payload[0] == "FW":
-      direction = RobotControl.MANUAL_DIRECTION_FW
+      direction = robotControl.RobotControl.MANUAL_DIRECTION_FW
     elif payload[0] == "BW":
-      direction = RobotControl.MANUAL_DIRECTION_BW
+      direction = robotControl.RobotControl.MANUAL_DIRECTION_BW
     elif payload[0] == "LT":
-      direction = RobotControl.MANUAL_DIRECTION_LT
+      direction = robotControl.RobotControl.MANUAL_DIRECTION_LT
     elif payload[0] == "RT":
-      direction = RobotControl.MANUAL_DIRECTION_RT
+      direction = robotControl.RobotControl.MANUAL_DIRECTION_RT
     else:
       return False
 
@@ -55,5 +57,5 @@ class RobotControlCallbacks:
       except:
         pass
 
-    self.control.set_state(RobotControl.STATE_MANUAL, [direction, speed, duration_ms])
+    self.control.set_state(robotControl.RobotControl.STATE_MANUAL, [direction, speed, duration_ms])
     return True
