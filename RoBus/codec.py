@@ -470,11 +470,10 @@ if __name__ == "__main__":
     setup = "from __main__ import "+function_string
     print("({})".format(function_string))
     print(print_line)
-    print(
-      "                     {:0.3f}us per packet".format(
-        (timeit.timeit(function_string+"()", setup=setup, number=1))*10.0
-      )
-    )
+    print("                     {:0.3f}us per packet".format(
+    (timeit.timeit(function_string+"()", setup=setup, number=1))*10.0
+
+  ))
 
 
 
