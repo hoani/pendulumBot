@@ -249,14 +249,14 @@ class Codec():
           root = self.protocol["data"][path[0]]
 
           if ppath in self.path_to_address_map.keys():
-            address = int(self.path_to_address_map[ppath])
+            address = int(self.path_to_address_map[ppath], 16)
           else:
             address = int(root["_addr"], 16)
             if len(path) > 1:
               incr = self._count_to_path(root, path[1:])
               if (incr != None):
                 address += incr
-                self.path_to_address_map[ppath] = str(address)
+                self.path_to_address_map[ppath] = "{:04x}".format(address)
               else:
                 print("invalid address: {}".format(ppath))
                 return "".encode("utf-8")
@@ -356,14 +356,16 @@ class Codec():
       return self.address_to_path_map[address]
 
     keys = self.address_map.keys()
+
     for i, key in enumerate(keys):
       if i + 1 == len(keys):
-        next_key = str(max(int(address, 16), int(key, 16)))
+        next_key = "{:04x}".format(max(int(address, 16) + 1, int(key, 16)))
       else:
         next_key = list(keys)[i + 1]
 
       if clamp(int(address, 16), int(key, 16), int(next_key, 16)-1) == int(address, 16):
         diff = int(address, 16) - int(key, 16)
+        
         (path, count) = path_from_count(
           self.protocol["data"][self.address_map[key]],
           diff
@@ -468,10 +470,11 @@ if __name__ == "__main__":
     setup = "from __main__ import "+function_string
     print("({})".format(function_string))
     print(print_line)
-    print("                     {:0.3f}us per packet".format(
-    (timeit.timeit(function_string+"()", setup=setup, number=1))*10.0
-
-  ))
+    print(
+      "                     {:0.3f}us per packet".format(
+        (timeit.timeit(function_string+"()", setup=setup, number=1))*10.0
+      )
+    )
 
 
 
