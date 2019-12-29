@@ -4,21 +4,24 @@ class MotorPair:
     self.right = right
     
   def forward(self, speed):
-    self.left.run(-speed)
-    self.right.run(speed)
+    self.move(speed, speed)
   
   def backward(self, speed):
-    self.left.run(speed)
-    self.right.run(-speed)
+    self.move(-speed, -speed)
     
   def turn_left(self, speed):
-    self.left.run(speed)
-    self.right.run(speed)
+    self.move(-speed, speed)
     
   def turn_right(self, speed):
-    self.left.run(-speed)
-    self.right.run(-speed)
+    self.move(speed, -speed)
     
   def stop(self):
     self.left.stop()
     self.right.stop()
+
+  def move(self, left, right):
+    self.left.run(-left)
+    self.right.run(right)
+
+  def get_duty(self):
+    return (-self.left.get_duty(), self.right.get_duty())

@@ -10,6 +10,7 @@ import rcpy.motor as motor
 
 class dcMotor:
   def __init__(self, index):
+    self.duty = 0.0
 
     if index == 1:
       self.m = motor.motor1
@@ -31,14 +32,17 @@ class dcMotor:
     if self.m == None:
       return
     
-    duty =  max(-1.0, min(speed, 1.0));
-    self.m.set(duty)
+    self.duty =  max(-1.0, min(speed, 1.0))
+    self.m.set(self.duty)
     
   def stop(self):
     if self.m == None:
       return
     
-    self.m.set(0)
+    self.run(0.0)
+
+  def get_duty(self):
+    return self.duty
     
 
 if __name__ == "__main__":

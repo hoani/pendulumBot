@@ -309,16 +309,32 @@ class AhrsTwoWheeled:
     return True
   
 
+  def set_calibrate(self):
+    if self._mode != AhrsTwoWheeled.MODE_CALIBRATE:
+      self.start_calibrate()
+
+
   def set_still(self):
+    if self._mode == AhrsTwoWheeled.MODE_CALIBRATE:
+      self.end_calibrate()
+
     self._mag_count = 0
     self._mode = AhrsTwoWheeled.MODE_STILL
 
 
-  def set_moving(self):
+
+  def set_dynamic(self):
+    if self._mode == AhrsTwoWheeled.MODE_CALIBRATE:
+      ret = self.end_calibrate()
+
     self._mode = AhrsTwoWheeled.MODE_DYNAMIC
 
 
+
   def set_smart(self):
+    if self._mode == AhrsTwoWheeled.MODE_CALIBRATE:
+      ret = self.end_calibrate()
+
     self._mode = AhrsTwoWheeled.MODE_SMART
 
 
