@@ -7,13 +7,16 @@ import time
 
 class dcMotor:
   def __init__(self, index):
-    pass
+    self.duty = 0.0
       
   def run(self, speed):
-    pass
+    self.duty = speed
     
   def stop(self):
-    pass
+    self.duty = 0.0
+
+  def get_duty(self):
+    return self.duty
     
 
 if __name__ == "__main__":

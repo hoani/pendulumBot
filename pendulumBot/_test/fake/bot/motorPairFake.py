@@ -4,21 +4,25 @@ class MotorPair:
     self.speed = 0
     
   def forward(self, speed):
-    self.mode = MotorPair.forward
+    self.last_call = MotorPair.forward
     self.speed = speed
   
   def backward(self, speed):
-    self.mode = MotorPair.backward
+    self.last_call = MotorPair.backward
     self.speed = speed
     
   def turn_left(self, speed):
-    self.mode = MotorPair.turn_left
+    self.last_call = MotorPair.turn_left
     self.speed = speed
     
   def turn_right(self, speed):
-    self.mode = MotorPair.turn_right
+    self.last_call = MotorPair.turn_right
     self.speed = speed
     
   def stop(self):
-    self.mode = MotorPair.stop
+    self.last_call = MotorPair.stop
     self.speed = 0
+
+  def move(self, left, right):
+    self.last_call = MotorPair.move
+    self.speed = (left, right)
