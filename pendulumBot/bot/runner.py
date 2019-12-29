@@ -31,15 +31,15 @@ class RobotRunner:
 
     if (simulate):
       from pendulumBot.driver.simulated import motors, imu, adc
-      self.check_exit_conditions = self._check_exit_conditions_simulated
       self.adc = adc
+      self.rcpy = None
 
     else:
       import rcpy
       from pendulumBot.driver.rcpy import motors, imu, adc
       rcpy.set_state(rcpy.RUNNING)
-      self.check_exit_conditions = self._check_exit_conditions_rcpy
       self.adc = adc
+      self.rcpy = rcpy
 
     self.sockets = []
 
@@ -166,11 +166,10 @@ class RobotRunner:
     finally:
       self.robo.wheels.stop()
 
-  def _check_exit_conditions_rcpy(self):
-    return rcpy.get_state() != rcpy.EXITING
-
-  def _check_exit_conditions_simulated(self):
-    return True
+  def check_exit_conditions(self):
+    if self.rcpy == None:
+      return True
+    return self.rcpy.get_state() != self.rcpy.EXITING
 
   def _calculate_cpu_usage(self, last_s, update_period_s):
     delta_meas_s = time.time() - last_s
