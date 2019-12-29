@@ -1,5 +1,7 @@
+
+[] Break Control Types out of RobotControl and make control a general interface to follow the open-closed principle
+
 [] Implement AHRS processing into the robot behaviour
-[] Look at separaing telemetry updates from the main run cycle so that telemetry updates are performed less frequently
 [] Structure sampling/processing of data better
 [] Add Navigation
 [] Add power status

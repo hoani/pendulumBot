@@ -8,7 +8,7 @@ class RemoteLogCallbacks:
     registry.add("rlog/active", self.callback_active)
 
   def callback_active(self, payload):
-    if payload[0] == True:
+    if payload == True:
       self._logger.start()
     else:
       self._logger.stop()
@@ -19,43 +19,73 @@ class RobotControlCallbacks:
     self.control = control
 
   def register(self, registry):
-    registry.add("control/automatic", self.callback_auto   )
-    registry.add(  "control/disable", self.callback_disable)
-    registry.add(   "control/manual", self.callback_manual )
+    registry.add( "control/automatic/speed",  self.callback_automatic_speed)
+    registry.add( "control/automatic/enable", self.callback_automatic_enable)
+    registry.add( "control/disable",          self.callback_disable)
+    registry.add( "control/manual/direction", self.callback_manual_direction )
+    registry.add( "control/manual/speed",     self.callback_manual_speed )
+    registry.add( "control/manual/duration",  self.callback_manual_duration )
 
-  def callback_auto(self, payload):
-    self.control.set_state(robotControl.RobotControl.STATE_AUTO, payload)
-    return True
+  def callback_automatic_speed(self, payload):
+    try:
+      speed = float(payload)
+      
+      self.control.set_automatic_speed(speed)
+      return True
+    except:
+      return False
+
+  def callback_automatic_enable(self, payload):
+    try:
+      automatic = bool(payload)
+      if automatic:
+        self.control.set_state(robotControl.RobotControl.STATE_AUTO)
+        return True
+      else:
+        return False
+    except:
+      return False
 
   def callback_disable(self, payload):
-    self.control.set_state(robotControl.RobotControl.STATE_DISABLED, None)
+    self.control.set_state(robotControl.RobotControl.STATE_DISABLED)
     return True
 
-  def callback_manual(self, payload):
+  def callback_manual_direction(self, payload):
     if len(payload) < 1:
       return False
-    if payload[0] == "FW":
+    if payload == "FW":
       direction = robotControl.RobotControl.MANUAL_DIRECTION_FW
-    elif payload[0] == "BW":
+    elif payload == "BW":
       direction = robotControl.RobotControl.MANUAL_DIRECTION_BW
-    elif payload[0] == "LT":
+    elif payload == "LT":
       direction = robotControl.RobotControl.MANUAL_DIRECTION_LT
-    elif payload[0] == "RT":
+    elif payload == "RT":
       direction = robotControl.RobotControl.MANUAL_DIRECTION_RT
     else:
       return False
 
-    try:
-      speed = float(payload[1])
-    except:
-      speed = 0.5
-
-    duration_ms = 500
-    if len(payload) >= 2:
-      try:
-        duration_ms = int(payload[2]*1000)
-      except:
-        pass
-
-    self.control.set_state(robotControl.RobotControl.STATE_MANUAL, [direction, speed, duration_ms])
+    self.control.set_manual_direction(direction)
+    self.control.set_state(robotControl.RobotControl.STATE_MANUAL)
     return True
+
+  def callback_manual_speed(self, payload):
+    try:
+      speed = float(payload)
+      self.control.set_manual_speed(speed)
+      return True
+    except:
+      return False
+
+  def callback_manual_duration(self, payload):
+    try:
+      duration_ms = int(payload * 1000)
+      self.control.set_manual_duration_ms(duration_ms)
+      return True
+    except:
+      return False
+
+
+
+if __name__ == "__main__":
+  print("module not callable")
+  

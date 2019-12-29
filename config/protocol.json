@@ -36,6 +36,10 @@
         "cpuse": { "type": "float", "set": false }
       }
     },
+    "motor": { "_addr": "1120",
+      "left": {"type": "float", "set": false},
+      "right": {"type": "float", "set": false}
+    },
     "control": { "_addr": "8000",
       "disable": { "type": "bool", "set": true },
       "manual": {
@@ -44,18 +48,18 @@
         "duration": { "type": "float", "set": true, "bounds": [0.0, 1.0]}
       },
       "automatic": {
-        "speed": { "type": "float", "set": true, "bounds": [0.0, 1.0] }
+        "speed":  { "type": "float", "set": true, "bounds": [0.0, 1.0] },
+        "enable": { "type": "bool", "set": true }
       },
-      "pid": {
+      "pendulum": {
         "gains": {
           "kp": { "type": "float", "set": true },
           "ki": { "type": "float", "set": true },
           "kd": { "type": "float", "set": true }
         },
-        "setpoint": {
-          "value": {"type": "float", "set": true },
-          "profile": { "type": ["flat", "square", "triangle"], "set": true }
-        }
+        "setpoint": {"type": "float", "set": true },
+        "limit":  {"type": "float", "set": true },
+        "enable": {"type": "bool", "set": true }
       }
     },
     "imu": { "_addr": "1200",
