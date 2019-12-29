@@ -1,4 +1,96 @@
+#!/usr/bin/env python3
+#
+# Copyright © 2019 Hoani Bryson
+# License: MIT (https://mit-license.org/)
+#
+# Command Callbacks
+#
+# Classes to handle commands and thier associated callbacks.
+# Currently all command callbacks are in one place, this may
+# change as the code base evolves.
+#
+
 from pendulumBot.bot import robotControl
+
+
+class PendulumCallbacks:
+  def __init__(self, control, pendulum):
+    self._control = control
+    self._pendulum = pendulum
+
+  def register(self, registry):
+    registry.add("control/pendulum/gains/kp", self.callback_gain_kp)
+    registry.add("control/pendulum/gains/ki", self.callback_gain_ki)
+    registry.add("control/pendulum/gains/kd", self.callback_gain_kd)
+    registry.add("control/pendulum/setpoint", self.callback_setpoint)
+    registry.add("control/pendulum/limit", self.callback_limit)
+    registry.add("control/pendulum/enable", self.callback_enable)
+
+  def callback_gain_kp(self, payload):
+    return self._pendulum.set_kp(payload)
+
+  def callback_gain_ki(self, payload):
+    return self._pendulum.set_ki(payload)
+
+  def callback_gain_kd(self, payload):
+    return self._pendulum.set_kd(payload)
+
+  def callback_setpoint(self, payload):
+    return self._pendulum.set_setpoint(payload)
+
+  def callback_limit(self, payload):
+    return self._pendulum.set_limit(payload)
+
+  def callback_enable(self, payload):
+    try:
+      enable = bool(payload)
+      if enable:
+        self._control.set_state(robotControl.RobotControl.STATE_PENDULUM)
+      else:
+        self._control.set_state(robotControl.RobotControl.STATE_DISABLED)
+      return self._pendulum.set_enable(enable)
+    except:
+      return False
+
+
+class AhrsCallbacks:
+  def __init__(self, ahrs):
+    self._ahrs = ahrs
+
+  def register(self, registry):
+    registry.add("ahrs/mode/cal",     self.callback_calibrate)
+    registry.add("ahrs/mode/still",   self.callback_still)
+    registry.add("ahrs/mode/dynamic", self.callback_dynamic)
+    registry.add("ahrs/mode/smart",   self.callback_smart)
+
+  def callback_calibrate(self, payload):    
+    if payload == True:
+      self._ahrs.set_calibrate()
+      return True
+    else:
+      return False
+      
+  def callback_still(self, payload):    
+    if payload == True:
+      self._ahrs.set_still()
+      return True
+    else:
+      return False
+
+  def callback_dynamic(self, payload):    
+    if payload == True:
+      self._ahrs.set_dynamic()
+      return True
+    else:
+      return False
+
+  def callback_smart(self, payload):    
+    if payload == True:
+      self._ahrs.set_smart()
+      return True
+    else:
+      return False
+
 
 class RemoteLogCallbacks:
   def __init__(self, logger):
