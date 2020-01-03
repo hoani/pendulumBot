@@ -71,7 +71,7 @@ class RobotControl:
     self.manual_speed = speed
 
   def set_manual_duration_ms(self, duration_ms):
-    self.manual_duration_ms = duration_ms
+    self.manual_period_ms = duration_ms
 
   def set_automatic_speed(self, speed):
     self.auto_speed_multiplier = speed
@@ -131,6 +131,7 @@ class RobotControl:
         print("Auto: Right Turn")
         
   def update_manual(self, delta_ms):
+    print(self.manual_period_ms)
     self.manual_period_ms -= delta_ms
     
     if self.manual_period_ms <= 0:

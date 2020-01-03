@@ -157,7 +157,6 @@ class RobotControlCallbacks:
       return False
 
     self.control.set_manual_direction(direction)
-    self.control.set_state(robotControl.RobotControl.STATE_MANUAL)
     return True
 
   def callback_manual_speed(self, payload):
@@ -172,6 +171,7 @@ class RobotControlCallbacks:
     try:
       duration_ms = int(payload * 1000)
       self.control.set_manual_duration_ms(duration_ms)
+      self.control.set_state(robotControl.RobotControl.STATE_MANUAL)
       return True
     except:
       return False
