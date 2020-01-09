@@ -1,3 +1,5 @@
+[X] Integrate L3aP into project
+[] Remove RoBus from project
 
 [] Break Control Types out of RobotControl and make control a general interface to follow the open-closed principle
 

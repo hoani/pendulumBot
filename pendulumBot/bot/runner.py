@@ -7,7 +7,7 @@ from pendulumBot.comms import commandRegister, commandCallbacks, remoteLogger
 from pendulumBot.utilities import vect, imuData, cli, debug
 from pendulumBot.control import pid, pendulum 
 
-from external.RoBus.RoBus import codec, packet
+import leap
 
 import datetime
 
@@ -16,7 +16,7 @@ class RobotRunner:
     args = cli.get_args(settings["default"])
     simulate = args.simulate
 
-    self.codec = codec.Codec('config/protocol.json')
+    self.codec = leap.Codec('config/protocol.json')
     self.cpu_usage = 0.0
     self.delta_max_s = 0.0
     self.max_cpu_usage = 0.0
@@ -120,7 +120,7 @@ class RobotRunner:
 
             for p in packets:
               if p.category == "set":
-                response = packet.Packet("ack")
+                response = leap.Packet("ack")
                 
                 for cmd in p.paths:
                   response.add(cmd)
@@ -128,7 +128,7 @@ class RobotRunner:
                 unpacked = p.unpack(self.codec)
 
                 for path in unpacked.keys():
-                  if self.registry.execute(path, unpacked[path]['value']) == False:
+                  if self.registry.execute(path, unpacked[path]) == False:
                     print("Command {} Failed".format(path))
                     response.category = "nak"
 
@@ -197,7 +197,7 @@ class RobotRunner:
     return int(delta_ms)
 
   def _publish_subscribed_packets(self, imu_data, angles):
-    imu_packet = packet.Packet('pub', 'imu',
+    imu_packet = leap.Packet('pub', 'imu',
       (
         imu_data.accelerometer.x,
         imu_data.accelerometer.y,
@@ -210,10 +210,10 @@ class RobotRunner:
         imu_data.magnetometer.z
       )
     )
-    ahrs_packet = packet.Packet('pub', 'ahrs/angle', (angles.pitch, angles.yaw))
-    cpu_use_packet = packet.Packet('pub', 'health/os/cpuse', self.cpu_usage)
-    batt_v_packet = packet.Packet('pub', 'health/batt/v', self.battery_v)
-    motor_packet = packet.Packet('pub', 'motor', self.robo.get_wheels_duty())
+    ahrs_packet = leap.Packet('pub', 'ahrs/angle', (angles.pitch, angles.yaw))
+    cpu_use_packet = leap.Packet('pub', 'health/os/cpuse', self.cpu_usage)
+    batt_v_packet = leap.Packet('pub', 'health/batt/v', self.battery_v)
+    motor_packet = leap.Packet('pub', 'motor', self.robo.get_wheels_duty())
 
     encoded = (
       self.codec.encode(imu_packet) +

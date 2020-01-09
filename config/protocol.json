@@ -15,98 +15,98 @@
   "separator": ":",
   "compound": "|",
   "end": "\n",
-  "data": {
-    "protocol": { "_addr": "0000",
-      "version": {
-        "major": { "type": "u8", "set": false },
-        "minor": { "type": "u8", "set": false },
-        "patch": { "type": "u16", "set": false }
-      },
-      "name": { "type": "string", "set": false }
-    },
-    "ping": { "_addr": "1000", "type":  "bool", "set": false },
-    "rlog": { "_addr": "1010",
-      "active": { "type": "bool", "set": true }
-    },
-    "health": { "_addr": "1100",
-      "batt": {
-        "v": { "type": "float", "set": false }
-      },
-      "os": {
-        "cpuse": { "type": "float", "set": false }
-      }
-    },
-    "motor": { "_addr": "1120",
-      "left": {"type": "float", "set": false},
-      "right": {"type": "float", "set": false}
-    },
-    "control": { "_addr": "8000",
-      "disable": { "type": "bool", "set": true },
-      "manual": {
-        "direction": { "type": ["FW", "BW", "LT", "RT"], "set": true },
-        "speed": { "type": "float", "set": true, "bounds": [0.0, 1.0] },
-        "duration": { "type": "float", "set": true, "bounds": [0.0, 1.0]}
-      },
-      "automatic": {
-        "speed":  { "type": "float", "set": true, "bounds": [0.0, 1.0] },
-        "enable": { "type": "bool", "set": true }
-      },
-      "pendulum": {
-        "gains": {
-          "kp": { "type": "float", "set": true },
-          "ki": { "type": "float", "set": true },
-          "kd": { "type": "float", "set": true }
-        },
-        "setpoint": {"type": "float", "set": true },
-        "limit":  {"type": "float", "set": true },
-        "enable": {"type": "bool", "set": true }
-      }
-    },
-    "imu": { "_addr": "1200",
-      "accel": {
-        "x": { "type": "float", "set": false },
-        "y": { "type": "float", "set": false },
-        "z": { "type": "float", "set": false }
-      },
-      "gyros": {
-        "x": { "type": "float", "set": false },
-        "y": { "type": "float", "set": false },
-        "z": { "type": "float", "set": false }
-      },
-      "magne": {
-        "x": { "type": "float", "set": false },
-        "y": { "type": "float", "set": false },
-        "z": { "type": "float", "set": false }
-      }
-    },
-    "nav": { "_addr": "1300",
-      "ang": {
-        "roll":  { "type": "float", "set": false },
-        "pitch": { "type": "float", "set": false },
-        "yaw":   { "type": "float", "set": false }
-      },
-      "pos": {
-        "x": { "type": "float", "set": false },
-        "y": { "type": "float", "set": false },
-        "z": { "type": "float", "set": false }
-      },
-      "vel": {
-        "x": { "type": "float", "set": false },
-        "y": { "type": "float", "set": false },
-        "z": { "type": "float", "set": false }
-      }
-    },
-    "ahrs": { "_addr": "1400",
-      "angle": {
-        "pitch":    { "type": "float", "set": false },
-        "yaw":      { "type": "float", "set": false }
-      },
-      "mode": {
-        "cal":      { "type": "bool", "set": true },
-        "still":    { "type": "bool", "set": true },
-        "dynamic":  { "type": "bool", "set": true },
-        "smart":    { "type": "bool", "set": true }
-      }
-    }
-  }
+  "data": [
+    { "protocol": { "addr": "0000", "data": [
+      { "version": { "data": [
+        { "major": { "type": "u8", "set": false } },
+        { "minor": { "type": "u8", "set": false } },
+        { "patch": { "type": "u16", "set": false } }
+      ] } },
+      { "name": { "type": "string", "set": false } }
+    ] } },
+    { "ping": { "addr": "1000", "type":  "bool", "set": false } },
+    { "rlog": { "addr": "1010", "data": [
+      { "active": { "type": "bool", "set": true } }
+    ] } },
+    { "health": { "addr": "1100", "data": [
+      { "batt": { "data": [
+        { "v": { "type": "float", "set": false } }
+      ] } },
+      { "os": { "data": [
+        { "cpuse": { "type": "float", "set": false } }
+      ] } }
+    ] } },
+    { "motor": { "addr": "1120", "data": [
+      { "left": {"type": "float", "set": false } },
+      { "right": {"type": "float", "set": false } }
+    ] } },
+    { "imu": { "addr": "1200", "data": [
+      { "accel": { "data": [
+        { "x": { "type": "float", "set": false } },
+        { "y": { "type": "float", "set": false } },
+        { "z": { "type": "float", "set": false } }
+      ] } },
+      { "gyros": { "data": [
+        { "x": { "type": "float", "set": false } },
+        { "y": { "type": "float", "set": false } },
+        { "z": { "type": "float", "set": false } }
+      ] } },
+      { "magne": { "data": [
+        { "x": { "type": "float", "set": false } },
+        { "y": { "type": "float", "set": false } },
+        { "z": { "type": "float", "set": false } }
+      ] } }
+    ] } },
+   {  "nav": { "addr": "1300", "data": [
+      { "ang": { "data": [
+        { "roll":  { "type": "float", "set": false } },
+        { "pitch": { "type": "float", "set": false } },
+        { "yaw":   { "type": "float", "set": false } }
+      ] } },
+      { "pos": { "data": [
+        { "x": { "type": "float", "set": false } },
+        { "y": { "type": "float", "set": false } },
+        { "z": { "type": "float", "set": false } }
+      ] } },
+      { "vel": { "data": [
+        { "x": { "type": "float", "set": false } },
+        { "y": { "type": "float", "set": false } },
+        { "z": { "type": "float", "set": false } }
+      ] } }
+    ] } },
+    { "ahrs": { "addr": "1400", "data": [
+      { "angle": { "data": [
+        { "pitch":    { "type": "float", "set": false } },
+        { "yaw":      { "type": "float", "set": false } }
+      ] } },
+      { "mode": { "data": [
+        { "cal":      { "type": "bool", "set": true } },
+        { "still":    { "type": "bool", "set": true } },
+        { "dynamic":  { "type": "bool", "set": true } },
+        { "smart":    { "type": "bool", "set": true } }
+      ] } }
+    ] } },
+    { "control": { "addr": "8000", "data": [
+      { "disable": { "type": "bool", "set": true } },
+      { "manual": { "data": [
+        { "direction": { "type": ["FW", "BW", "LT", "RT"], "set": true } },
+        { "speed": { "type": "float", "set": true, "bounds": [0.0, 1.0] } },
+        { "duration": { "type": "float", "set": true, "bounds": [0.0, 1.0] } }
+      ] } },
+      { "automatic": { "data": [
+        { "speed":  { "type": "float", "set": true, "bounds": [0.0, 1.0] } },
+        { "enable": { "type": "bool", "set": true } }
+      ] } },
+      { "pendulum": { "data": [
+        { "gains": { "data": [
+          { "kp": { "type": "float", "set": true } },
+          { "ki": { "type": "float", "set": true } },
+          { "kd": { "type": "float", "set": true } }
+        ] } },
+        { "setpoint": {"type": "float", "set": true } },
+        { "limit":  {"type": "float", "set": true } },
+        { "enable": {"type": "bool", "set": true } }
+      ] } }
+    ] } }
+  ]
 }
