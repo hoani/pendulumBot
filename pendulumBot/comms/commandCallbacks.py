@@ -215,10 +215,11 @@ class ServoCallbacks:
       if duty < -1.5 or duty >= 1.5:
         return False
 
-      servo = self.servos.servo(self.index)
+      servo = self.servos[self.index]
       servo.set_duty(duty)
       return True
-    except:
+    except Exception as e:
+      print(e)
       return False
 
 

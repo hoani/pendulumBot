@@ -71,12 +71,17 @@ class RobotRunner:
 
       self.robo.add_controller(RobotControl.STATE_PENDULUM, self.pendulum_control)
 
+      self.servo_set = [
+        self.servo(1), self.servo(2), self.servo(3), self.servo(4),
+        self.servo(5), self.servo(6), self.servo(7), self.servo(8)
+      ]
+
       self.callback_objs = [
         commandCallbacks.PendulumCallbacks(self.robo, self.pendulum_control),
         commandCallbacks.RobotControlCallbacks(self.robo),
         commandCallbacks.RemoteLogCallbacks(self.remote_logger),
         commandCallbacks.AhrsCallbacks(self.ahrs),
-        commandCallbacks.ServoCallbacks(self.servo)
+        commandCallbacks.ServoCallbacks(self.servo_set)
       ]
 
       self.registry = commandRegister.CommandRegister()
