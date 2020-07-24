@@ -1,6 +1,0 @@
-*__pycache__*
-.pytest_cache*
-*.csv
-env*
-*.vscode*
-*.DS_Store*
