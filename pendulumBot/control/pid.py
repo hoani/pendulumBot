@@ -29,7 +29,7 @@ class Pid:
     pout = self._calculate_proportional(position, delta_s, error)
     iout = self._calculate_integral(position, delta_s, error)
     dout = self._calculate_derivative(position, delta_s, error)
-    
+
     self.error_last = error
 
     self.control_output = pout + iout + dout
@@ -77,8 +77,10 @@ class Pid:
       if self.position_last == None:
         self.position_last = position
 
+      dpos = self.position_last - position
+      self.position_last = position
+
       if delta_s > 0.0:
-        dpos = self.position_last - position
         return self.kd * dpos / delta_s
     
     return 0.0

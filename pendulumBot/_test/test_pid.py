@@ -139,6 +139,12 @@ class TestPidDifferential:
     u = self.ctrl.update(position = -1.0, delta_s = 1.0)
     assert(u == 1.0)
 
+  def test_simple_multicycle(self):
+    self.ctrl.update(position = 0.0, delta_s = 1.0)
+    u = self.ctrl.update(position = -1.0, delta_s = 1.0)
+    u = self.ctrl.update(position = -1.5, delta_s = 1.0)
+    assert(u == 0.5)
+
   def test_uses_position_only(self):
     self.ctrl.update(position = 0.0, delta_s = 1.0)
     self.ctrl.set_setpoint(-1.0)
