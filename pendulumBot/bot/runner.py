@@ -72,8 +72,8 @@ class RobotRunner:
       self.robo.add_controller(RobotControl.STATE_PENDULUM, self.pendulum_control)
 
       self.servo_set = [
-        self.servo(1), self.servo(2), self.servo(3), self.servo(4),
-        self.servo(5), self.servo(6), self.servo(7), self.servo(8)
+        self.servo.servo(1), self.servo.servo(2), self.servo.servo(3), self.servo.servo(4),
+        self.servo.servo(5), self.servo.servo(6), self.servo.servo(7), self.servo.servo(8)
       ]
 
       self.callback_objs = [
