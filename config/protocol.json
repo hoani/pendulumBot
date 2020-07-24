@@ -107,6 +107,13 @@
         { "limit":  {"type": "float", "set": true } },
         { "enable": {"type": "bool", "set": true } }
       ] } }
+    ] } },
+    { "servo": { "addr": "9000", "data": [
+      { "disable": { "type": "u8", "set": true } },
+      { "set": { "data": [
+        { "index": { "type": "u8", "set": true } },
+        { "duty": { "type": "float", "set": true } }
+      ] } }
     ] } }
   ]
 }

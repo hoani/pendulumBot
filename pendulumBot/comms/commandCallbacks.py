@@ -176,6 +176,51 @@ class RobotControlCallbacks:
     except:
       return False
 
+class ServoCallbacks:
+  def __init__(self, servos):
+    self.servos = servos
+    self.index = None
+
+  def register(self, registry):
+    registry.add( "servo/disable",  self.callback_disable)
+    registry.add( "servo/set/index", self.callback_set_index)
+    registry.add( "servo/set/duty", self.callback_set_duty)
+
+  def callback_disable(self, payload):
+    try:
+      index = int(payload)
+      if index < 0 or index >= 8:
+        return False
+
+      servo = self.servos.servo(index)
+      servo.disable()
+      return True
+    except:
+      return False
+
+  def callback_set_index(self, payload):
+    try:
+      index = int(payload)
+      if index < 0 or index >= 8:
+        return False
+
+      self.index = index
+      return True
+    except:
+      return False
+
+  def callback_set_duty(self, payload):
+    try:
+      duty = float(payload)
+      if duty < -1.5 or duty >= 1.5:
+        return False
+
+      servo = self.servos.servo(self.index)
+      servo.set_duty(duty)
+      return True
+    except:
+      return False
+
 
 
 if __name__ == "__main__":

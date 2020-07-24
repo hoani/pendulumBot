@@ -7,5 +7,5 @@
 [] Structure sampling/processing of data better
 [] Add Navigation
 [] Add power status
-[] Add servo
+[X] Add servo
 [] Add file headers and descriptions

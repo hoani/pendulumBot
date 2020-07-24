@@ -30,15 +30,17 @@ class RobotRunner:
     hostTcpPortLogging = int(args.tcp[2])
 
     if (simulate):
-      from pendulumBot.driver.simulated import motors, imu, adc
+      from pendulumBot.driver.simulated import motors, imu, adc, servo
       self.adc = adc
+      self.servo = servo
       self.rcpy = None
 
     else:
       import rcpy
-      from pendulumBot.driver.rcpy import motors, imu, adc
+      from pendulumBot.driver.rcpy import motors, imu, adc, servo
       rcpy.set_state(rcpy.RUNNING)
       self.adc = adc
+      self.servo = servo
       self.rcpy = rcpy
 
     self.sockets = []
@@ -73,7 +75,8 @@ class RobotRunner:
         commandCallbacks.PendulumCallbacks(self.robo, self.pendulum_control),
         commandCallbacks.RobotControlCallbacks(self.robo),
         commandCallbacks.RemoteLogCallbacks(self.remote_logger),
-        commandCallbacks.AhrsCallbacks(self.ahrs)
+        commandCallbacks.AhrsCallbacks(self.ahrs),
+        commandCallbacks.ServoCallbacks(self.servo)
       ]
 
       self.registry = commandRegister.CommandRegister()
