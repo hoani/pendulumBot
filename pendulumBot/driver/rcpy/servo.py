@@ -34,7 +34,7 @@ class servo:
       
   def set_duty(self, duty):
     if self.clock is None:
-      self.clock = self.start(0.1)
+      self.clock = self.m.start(0.1)
     self.duty = duty
     self.m.set(duty)
     
