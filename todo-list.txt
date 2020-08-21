@@ -1,11 +1,34 @@
-[X] Integrate L3aP into project
-[] Remove RoBus from project
+[] Migrate to github
+  [] Get CI working
+  [] Include PEP8 style checking in CI (use flake8)
+
+[] Restructure CLI
+  [] Use subparsers to determine mode we are running
+  [] Most options can still be high level (e.g. tcp is highlevel)
+  [] --local should be an options under the `simulate` mode to make all tcp addresses local
+
+[] Add playback mode
+  - simply allows playing back telemetry and status etc from csv file
+  [] add playback cli argument - optionally takes a playback speed
+  [] add csv reader for reading playback data
+
+[] Simulation libraries
+  - want to be able to write models to simulate robots
+  [] archtect the best way to define a robot model in the app and inject that model for dio components
+
+
+
 
 [] Break Control Types out of RobotControl and make control a general interface to follow the open-closed principle
+
+[] Implement AHRS Smart Mode
 
 [] Implement AHRS processing into the robot behaviour
 [] Structure sampling/processing of data better
 [] Add Navigation
 [] Add power status
-[X] Add servo
 [] Add file headers and descriptions
+
+[] Robot shouldn't panic without WIFI 
+  - problem is in the Runner when robot can not connect to network
+  - In this case, it should fall back to it's own network

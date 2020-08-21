@@ -1,0 +1,8 @@
+leap-protocol
+pybluez
+pyrc
+argparse
+numpy
+scipy
+matplotlib
+pytest
