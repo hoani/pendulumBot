@@ -1,7 +1,3 @@
-[] Migrate to github
-  [] Get CI working
-  [] Include PEP8 style checking in CI (use flake8)
-
 [] Restructure CLI
   [] Use subparsers to determine mode we are running
   [] Most options can still be high level (e.g. tcp is highlevel)

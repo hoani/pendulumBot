@@ -27,7 +27,7 @@ class CsvLines(dict):
             return True
 
     def pop_string(self):
-        if self.ready() == False:
+        if self.ready() is False:
             return ""
 
         line = self.separator.join(self.values())
