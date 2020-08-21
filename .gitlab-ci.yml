@@ -1,7 +1,0 @@
-image: python:3.6
-
-unit-tests:
-  stage: test
-  script:
-  - make init
-  - make test
