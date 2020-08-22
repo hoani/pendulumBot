@@ -87,7 +87,7 @@ class RobotRunner:
 
             self.servo_set = []
             for i in range(8):
-                self.serve_set.append(self.serve.Servo(i + 1))
+                self.servo_set.append(self.servo.Servo(i + 1))
 
             self.callback_objs = [
                 commandCallbacks.PendulumCallbacks(
@@ -151,9 +151,9 @@ class RobotRunner:
                                 unpacked = p.unpack(self.codec)
 
                                 for path in unpacked.keys():
-                                    if not self.registry.\
-                                            execute(path, unpacked[path]):
+                                    if not self.registry.execute(path, unpacked[path]):
                                         print("Command {} Failed".format(path))
+                                        print(unpacked.keys())
                                         response.category = "nak"
 
                             sock.send(addr, self.codec.encode(response))

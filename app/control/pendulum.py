@@ -62,8 +62,10 @@ class PendulumPid:
         try:
             setpoint = float(setpoint)
             self.pid.set_setpoint(setpoint)
+            return True
         except Exception:
             self._print_set_failure("setpoint", setpoint)
+            return False
 
     def set_limit(self, limit):
         try:
