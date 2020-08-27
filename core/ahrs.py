@@ -173,6 +173,12 @@ class AhrsTwoWheeled:
         if self._last_data is None:
             return
 
+        self.pitch, self.yaw = self._calculate_dynamic(delta_t, imu_data)
+
+    #
+    # Calculate the gyroscope based pitch and yaw
+    #
+    def _calculate_dynamic(self, delta_t, imu_data):
         rates_b = (imu_data.gyroscope - self._cal.gyro_drift)
         prev_rates_b = self._last_data.gyroscope - self._cal.gyro_drift
         R_b2l = self._rotation_b2l()
@@ -181,15 +187,49 @@ class AhrsTwoWheeled:
 
         _, delta_pitch, delta_yaw = R_b2l.dot(delta_angle_b)
 
-        self.yaw = add_angle(self.yaw, delta_yaw)
-        self.pitch = add_angle(self.pitch, delta_pitch)
+        yaw = add_angle(self.yaw, delta_yaw)
+        pitch = add_angle(self.pitch, delta_pitch)
+        return (pitch, yaw)
 
     #
-    # TODO: Implement some kind of specialized filter here for sensor fusion
-    # (probably kalman)
+    # Weight based filter which will fuse still model and dynamic models together
     #
     def _update_smart(self, delta_t, imu_data):
-        pass  # TODO: look at some sensible rate based sensor fusion
+        still_pitch, weight = self._calculate_smart_still(delta_t, imu_data)
+        dyn_pitch, dyn_yaw = self._calculate_dynamic(delta_t, imu_data)
+
+        self.yaw = dyn_yaw
+        self.pitch = still_pitch * weight + dyn_pitch * (1 - weight)
+
+    #
+    # Calculate weights as well as the still pitch vector
+    # We don't care about yaw in this mode
+    #
+    def _calculate_smart_still(self, delta_t, imu_data):
+        # Trust requirement 1: gyros are relatively still
+        gyros = imu_data.gyroscope.array()
+        gyro_lower, gyro_upper = 0.4, 2.4
+        wg = (np.mean(gyros) + np.std(gyros) - gyro_lower)
+        wg = wg / (gyro_upper - gyro_lower)
+
+        accel_b = vec3.Vec3(
+            np.mean(self._accel_data.x),
+            np.mean(self._accel_data.y),
+            np.mean(self._accel_data.z)
+        )
+
+        norm_accel_b = np.norm(accel_b.array())
+        accel_lower, accel_upper = 0.5, 1.0
+        wa = (norm_accel_b - AhrsConstants.DEFAULT_GRAVITY) - accel_lower
+        wa = wa / (accel_upper - accel_lower)
+
+        weight1 = 1.0 - max(min(wg, 1.0), 0.0)
+        weight2 = 1.0 - max(min(wa, 1.0), 0.0)
+        weight = weight1 * weight2
+
+        pitch = self._calculate_pitch_from_gravity(accel_b)
+
+        return pitch, weight
 
     #
     # Assumes the system is still (verifies with sensor measurements)
