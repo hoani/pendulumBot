@@ -40,18 +40,21 @@ class TestAhrsDynamicUpdates:
 
     def test_simple_turn(self):
         self.imu_data.gyroscope.z = 2.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(values.yaw == 2.0)
 
     def test_quick_turn(self):
         self.imu_data.gyroscope.z = 10.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(0.25, self.imu_data)
         values = self.ahrs.get()
         assert(values.yaw == 2.5)
 
     def test_cumulative_turn(self):
         self.imu_data.gyroscope.z = 10.0
+        self.ahrs.update(0.0, self.imu_data)
         for i in range(8):
             self.ahrs.update(0.125, self.imu_data)
         values = self.ahrs.get()
@@ -59,36 +62,42 @@ class TestAhrsDynamicUpdates:
 
     def test_negative_turn(self):
         self.imu_data.gyroscope.z = -10.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(values.yaw == -10.0)
 
     def test_wrap_around_turn(self):
         self.imu_data.gyroscope.z = 200.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(values.yaw == -160.0)
 
     def test_wrap_around_neg_turn(self):
         self.imu_data.gyroscope.z = -200.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(values.yaw == 160.0)
 
     def test_wrap_around_multi_turn(self):
         self.imu_data.gyroscope.z = 3660.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(values.yaw == 60.0)
 
     def test_simple_tilt(self):
         self.imu_data.gyroscope.y = 2.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(values.pitch == 2.0)
 
     def test_yaw_orthogonality_x(self):
         self.imu_data.gyroscope.x = 2.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(values.yaw == 0.0)
@@ -96,6 +105,7 @@ class TestAhrsDynamicUpdates:
     def test_yaw_orthogonality_z(self):
         self.ahrs.pitch = 90.0
         self.imu_data.gyroscope.z = 2.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(abs_diff(values.yaw, 0.0) < 0.0001)
@@ -103,6 +113,7 @@ class TestAhrsDynamicUpdates:
     def test_yaw_90_deg(self):
         self.ahrs.pitch = 90.0
         self.imu_data.gyroscope.x = 2.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(abs_diff(values.yaw, -2.0) < 0.0001)
@@ -110,6 +121,7 @@ class TestAhrsDynamicUpdates:
     def test_yaw_30_deg(self):
         self.ahrs.pitch = 30.0
         self.imu_data.gyroscope.x = 10.0
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(abs_diff(values.yaw, -5.0) < 0.0001)
@@ -134,6 +146,7 @@ class TestAhrsDynamicUpdates:
 
         self.ahrs.pitch = 0.0
         self.imu_data.gyroscope.z = 5.5
+        self.ahrs.update(0.0, self.imu_data)
         self.ahrs.update(1.0, self.imu_data)
         values = self.ahrs.get()
         assert(abs_diff(values.yaw, 5.0) < 0.0001)
@@ -511,3 +524,16 @@ class TestAhrsHelpers:
         assert(abs_diff(ahrs.angle_2d_deg(v2, v3), -45.0) < 1e-12)
         assert(abs_diff(ahrs.angle_2d_deg(-v1, v3), -135.0) < 1e-12)
         assert(abs_diff(ahrs.angle_2d_deg(v3, -v1), 135.0) < 1e-12)
+
+    def test_rate_integration(self):
+        r0 = vec3.Vec3(0.0, 0.0, 0.0)
+        r1 = vec3.Vec3(0.0, 1.0, 0.0)
+        assert(abs_diff(ahrs.integrate_rates(1.0, r0, r1).y, 0.5) < 1e-12)
+        assert(abs_diff(ahrs.integrate_rates(-1.0, r0, r1).y, -0.5) < 1e-12)
+        assert(abs_diff(ahrs.integrate_rates(0.1, r0, r1).y, 0.05) < 1e-12)
+
+        r0 = vec3.Vec3(10.0, -10.0, 20.0)
+        r1 = vec3.Vec3(20.0, 30.0, -20.0)
+        assert(abs_diff(ahrs.integrate_rates(1.0, r0, r1).x, 15.0) < 1e-12)
+        assert(abs_diff(ahrs.integrate_rates(1.0, r0, r1).y, 10.0) < 1e-12)
+        assert(abs_diff(ahrs.integrate_rates(1.0, r0, r1).z, 0.0) < 1e-12)

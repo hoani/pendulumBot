@@ -29,6 +29,28 @@ def angle_2d_deg(primary, secondary):
     return radians * AhrsConstants.RAD_TO_DEG
 
 
+#
+# Trapezoidal integration with a delta t and a rate
+#
+def integrate_rates(delta_t, rates_prev, rates):
+    rates_sum = rates_prev + rates
+    delta_angles = vec3.Vec3(
+        rates_sum.x * 0.5 * delta_t,
+        rates_sum.y * 0.5 * delta_t,
+        rates_sum.z * 0.5 * delta_t
+    )
+    return delta_angles
+
+
+def add_angle(angle1, angle2):
+    result = angle1 + angle2
+    while(result > AhrsConstants.DEG_WRAP):
+        result -= AhrsConstants.DEG_PER_REV
+    while(result < -AhrsConstants.DEG_WRAP):
+        result += AhrsConstants.DEG_PER_REV
+    return result
+
+
 class AhrsAngles:
     def __init__(self, pitch, yaw):
         self.pitch = pitch
@@ -140,6 +162,7 @@ class AhrsTwoWheeled:
     def update(self, delta_t, imu_data):
         self._store_imu_data(imu_data)
         AhrsTwoWheeled._update_map[self._mode](self, delta_t, imu_data)
+        self._last_data = copy.deepcopy(imu_data)
 
     #
     # Update yaw and pitch based on gyroscope measurements alone
@@ -147,13 +170,19 @@ class AhrsTwoWheeled:
     # or magnetometer measurements to determine attitude
     #
     def _update_dynamic(self, delta_t, imu_data):
-        rates_b = (imu_data.gyroscope - self._cal.gyro_drift).array()
+        if self._last_data is None:
+            return
+
+        rates_b = (imu_data.gyroscope - self._cal.gyro_drift)
+        prev_rates_b = self._last_data.gyroscope - self._cal.gyro_drift
         R_b2l = self._rotation_b2l()
 
-        _, rate_pitch, rate_yaw = R_b2l.dot(rates_b)
+        delta_angle_b = integrate_rates(delta_t, prev_rates_b, rates_b).array()
 
-        self.yaw = self._integrate_angle(delta_t, self.yaw, rate_yaw)
-        self.pitch = self._integrate_angle(delta_t, self.pitch, rate_pitch)
+        _, delta_pitch, delta_yaw = R_b2l.dot(delta_angle_b)
+
+        self.yaw = add_angle(self.yaw, delta_yaw)
+        self.pitch = add_angle(self.pitch, delta_pitch)
 
     #
     # TODO: Implement some kind of specialized filter here for sensor fusion
@@ -329,18 +358,6 @@ class AhrsTwoWheeled:
             [0.0, 1.0,       0.0],
             [-sin_pitch, 0.0, cos_pitch]
         ])
-
-    #
-    # Do dumb integration with a delta t and a rate
-    # TODO: upgrade to trapeziodal
-    #
-    def _integrate_angle(self, delta_t, current_angle, rate):
-        angle = current_angle + rate * delta_t
-        while(angle > AhrsConstants.DEG_WRAP):
-            angle -= AhrsConstants.DEG_PER_REV
-        while(angle < -AhrsConstants.DEG_WRAP):
-            angle += AhrsConstants.DEG_PER_REV
-        return angle
 
     #
     # Determine the pitch angle using a gravity vector
